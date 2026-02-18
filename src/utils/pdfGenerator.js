@@ -680,6 +680,163 @@ export function generatePDF(formData) {
     });
   }
 
+  // Custom Sections
+  if (formData.customSections && formData.customSections.length > 0) {
+    formData.customSections.forEach(customSection => {
+      if (!customSection.title || !customSection.items || customSection.items.length === 0) return;
+      
+      yPos = checkPageBreak(doc, yPos, 20);
+      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS);
+      
+      customSection.items.forEach(item => {
+        if (!item.content || !item.content.trim()) return;
+        
+        yPos = checkPageBreak(doc, yPos, 10);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(COLORS.text);
+        
+        const contentLines = item.content.split('\n').filter(line => line.trim());
+        contentLines.forEach(line => {
+          yPos = checkPageBreak(doc, yPos, 5);
+          
+          const trimmedLine = line.trim();
+          
+          // Check for bullet points
+          if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+            const bulletText = trimmedLine.substring(1).trim();
+            doc.setFont('helvetica', 'normal');
+            doc.text('•', MARGINS.left, yPos);
+            
+            const parts = parseFormattedText(bulletText);
+            let currentX = MARGINS.left + 5;
+            let currentY = yPos;
+            
+            parts.forEach(part => {
+              if (!part.text) return;
+              
+              if (part.bold && part.italic) {
+                doc.setFont('helvetica', 'bolditalic');
+              } else if (part.bold) {
+                doc.setFont('helvetica', 'bold');
+              } else if (part.italic) {
+                doc.setFont('helvetica', 'italic');
+              } else {
+                doc.setFont('helvetica', 'normal');
+              }
+              
+              const words = part.text.split(' ');
+              words.forEach((word, idx) => {
+                const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left + 5) {
+                  currentY += 4;
+                  currentX = MARGINS.left + 5;
+                  currentY = checkPageBreak(doc, currentY, 5);
+                }
+                
+                doc.text(wordWithSpace, currentX, currentY);
+                currentX += wordWidth;
+              });
+            });
+            
+            yPos = currentY;
+          }
+          // Check for numbered lists
+          else if (/^\d+\./.test(trimmedLine)) {
+            const match = trimmedLine.match(/^(\d+\.)\s*(.*)$/);
+            if (match) {
+              const number = match[1];
+              const text = match[2];
+              
+              doc.setFont('helvetica', 'normal');
+              doc.text(number, MARGINS.left, yPos);
+              
+              const parts = parseFormattedText(text);
+              let currentX = MARGINS.left + doc.getTextWidth(number + ' ');
+              let currentY = yPos;
+              
+              parts.forEach(part => {
+                if (!part.text) return;
+                
+                if (part.bold && part.italic) {
+                  doc.setFont('helvetica', 'bolditalic');
+                } else if (part.bold) {
+                  doc.setFont('helvetica', 'bold');
+                } else if (part.italic) {
+                  doc.setFont('helvetica', 'italic');
+                } else {
+                  doc.setFont('helvetica', 'normal');
+                }
+                
+                const words = part.text.split(' ');
+                words.forEach((word, idx) => {
+                  const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                  const wordWidth = doc.getTextWidth(wordWithSpace);
+                  
+                  if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left + 5) {
+                    currentY += 4;
+                    currentX = MARGINS.left + 5;
+                    currentY = checkPageBreak(doc, currentY, 5);
+                  }
+                  
+                  doc.text(wordWithSpace, currentX, currentY);
+                  currentX += wordWidth;
+                });
+              });
+              
+              yPos = currentY;
+            }
+          }
+          // Regular text with formatting
+          else {
+            const parts = parseFormattedText(trimmedLine);
+            let currentX = MARGINS.left;
+            let currentY = yPos;
+            
+            parts.forEach(part => {
+              if (!part.text) return;
+              
+              if (part.bold && part.italic) {
+                doc.setFont('helvetica', 'bolditalic');
+              } else if (part.bold) {
+                doc.setFont('helvetica', 'bold');
+              } else if (part.italic) {
+                doc.setFont('helvetica', 'italic');
+              } else {
+                doc.setFont('helvetica', 'normal');
+              }
+              
+              const words = part.text.split(' ');
+              words.forEach((word, idx) => {
+                const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left) {
+                  currentY += 4;
+                  currentX = MARGINS.left;
+                  currentY = checkPageBreak(doc, currentY, 5);
+                }
+                
+                doc.text(wordWithSpace, currentX, currentY);
+                currentX += wordWidth;
+              });
+            });
+            
+            yPos = currentY;
+          }
+          
+          yPos += 4;
+        });
+        
+        yPos += 2;
+      });
+      
+      yPos += 2;
+    });
+  }
+
   // Save the PDF
   const fileName = formData.personalInfo.fullName 
     ? `${formData.personalInfo.fullName.replace(/\s+/g, '_')}_Resume.pdf`
@@ -1191,6 +1348,163 @@ export function previewPDF(formData) {
       }
       
       yPos += 3;
+    });
+  }
+
+  // Custom Sections
+  if (formData.customSections && formData.customSections.length > 0) {
+    formData.customSections.forEach(customSection => {
+      if (!customSection.title || !customSection.items || customSection.items.length === 0) return;
+      
+      yPos = checkPageBreak(doc, yPos, 20);
+      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS);
+      
+      customSection.items.forEach(item => {
+        if (!item.content || !item.content.trim()) return;
+        
+        yPos = checkPageBreak(doc, yPos, 10);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(COLORS.text);
+        
+        const contentLines = item.content.split('\n').filter(line => line.trim());
+        contentLines.forEach(line => {
+          yPos = checkPageBreak(doc, yPos, 5);
+          
+          const trimmedLine = line.trim();
+          
+          // Check for bullet points
+          if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+            const bulletText = trimmedLine.substring(1).trim();
+            doc.setFont('helvetica', 'normal');
+            doc.text('•', MARGINS.left, yPos);
+            
+            const parts = parseFormattedText(bulletText);
+            let currentX = MARGINS.left + 5;
+            let currentY = yPos;
+            
+            parts.forEach(part => {
+              if (!part.text) return;
+              
+              if (part.bold && part.italic) {
+                doc.setFont('helvetica', 'bolditalic');
+              } else if (part.bold) {
+                doc.setFont('helvetica', 'bold');
+              } else if (part.italic) {
+                doc.setFont('helvetica', 'italic');
+              } else {
+                doc.setFont('helvetica', 'normal');
+              }
+              
+              const words = part.text.split(' ');
+              words.forEach((word, idx) => {
+                const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left + 5) {
+                  currentY += 4;
+                  currentX = MARGINS.left + 5;
+                  currentY = checkPageBreak(doc, currentY, 5);
+                }
+                
+                doc.text(wordWithSpace, currentX, currentY);
+                currentX += wordWidth;
+              });
+            });
+            
+            yPos = currentY;
+          }
+          // Check for numbered lists
+          else if (/^\d+\./.test(trimmedLine)) {
+            const match = trimmedLine.match(/^(\d+\.)\s*(.*)$/);
+            if (match) {
+              const number = match[1];
+              const text = match[2];
+              
+              doc.setFont('helvetica', 'normal');
+              doc.text(number, MARGINS.left, yPos);
+              
+              const parts = parseFormattedText(text);
+              let currentX = MARGINS.left + doc.getTextWidth(number + ' ');
+              let currentY = yPos;
+              
+              parts.forEach(part => {
+                if (!part.text) return;
+                
+                if (part.bold && part.italic) {
+                  doc.setFont('helvetica', 'bolditalic');
+                } else if (part.bold) {
+                  doc.setFont('helvetica', 'bold');
+                } else if (part.italic) {
+                  doc.setFont('helvetica', 'italic');
+                } else {
+                  doc.setFont('helvetica', 'normal');
+                }
+                
+                const words = part.text.split(' ');
+                words.forEach((word, idx) => {
+                  const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                  const wordWidth = doc.getTextWidth(wordWithSpace);
+                  
+                  if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left + 5) {
+                    currentY += 4;
+                    currentX = MARGINS.left + 5;
+                    currentY = checkPageBreak(doc, currentY, 5);
+                  }
+                  
+                  doc.text(wordWithSpace, currentX, currentY);
+                  currentX += wordWidth;
+                });
+              });
+              
+              yPos = currentY;
+            }
+          }
+          // Regular text with formatting
+          else {
+            const parts = parseFormattedText(trimmedLine);
+            let currentX = MARGINS.left;
+            let currentY = yPos;
+            
+            parts.forEach(part => {
+              if (!part.text) return;
+              
+              if (part.bold && part.italic) {
+                doc.setFont('helvetica', 'bolditalic');
+              } else if (part.bold) {
+                doc.setFont('helvetica', 'bold');
+              } else if (part.italic) {
+                doc.setFont('helvetica', 'italic');
+              } else {
+                doc.setFont('helvetica', 'normal');
+              }
+              
+              const words = part.text.split(' ');
+              words.forEach((word, idx) => {
+                const wordWithSpace = idx < words.length - 1 ? word + ' ' : word;
+                const wordWidth = doc.getTextWidth(wordWithSpace);
+                
+                if (currentX + wordWidth > PAGE_WIDTH - MARGINS.right && currentX > MARGINS.left) {
+                  currentY += 4;
+                  currentX = MARGINS.left;
+                  currentY = checkPageBreak(doc, currentY, 5);
+                }
+                
+                doc.text(wordWithSpace, currentX, currentY);
+                currentX += wordWidth;
+              });
+            });
+            
+            yPos = currentY;
+          }
+          
+          yPos += 4;
+        });
+        
+        yPos += 2;
+      });
+      
+      yPos += 2;
     });
   }
 

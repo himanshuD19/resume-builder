@@ -44,17 +44,45 @@ You can combine bold and italic within bullet points and numbered lists:
 2. **Phase 2**: Design and prototyping
 ```
 
+## Smart Auto-Continuation
+
+The editor is smart and helps you work faster:
+
+### **Enter Key Behavior**
+- **Press Enter** on a bullet point → Automatically creates the next bullet point
+- **Press Enter** on a numbered item → Automatically creates the next number (increments)
+- **Press Enter** on an empty bullet/number → Exits list mode (removes empty item)
+- **Press Shift+Enter** → Creates a simple line break without continuing the list
+
+### **Example Workflow**
+1. Click the bullet button or type `• `
+2. Type your first point
+3. Press **Enter** → New bullet appears automatically
+4. Type your second point
+5. Press **Enter** → New bullet appears
+6. Press **Enter** again on empty bullet → Exits bullet mode
+
+Same works for numbered lists (1., 2., 3., etc.)!
+
 ## Tips for Best Results
 
 1. **Use the toolbar buttons** - They automatically insert the correct syntax
 2. **Select text first** - Highlight text before clicking Bold/Italic to wrap it
 3. **Mix formats freely** - Combine bullets, numbering, bold, and italic as needed
-4. **Preview before download** - Always check the PDF preview to ensure formatting looks correct
-5. **Keep it professional** - Don't overuse formatting; use it to highlight key achievements
+4. **Use Enter for lists** - Press Enter to continue bullets/numbering automatically
+5. **Use Shift+Enter for line breaks** - When you need a new line without continuing the list
+6. **Preview before download** - Always check the PDF preview to ensure formatting looks correct
+7. **Keep it professional** - Don't overuse formatting; use it to highlight key achievements
 
 ## Keyboard Shortcuts
 
-While there are no keyboard shortcuts, you can type the markdown syntax directly:
+### Smart Keys
+- **Enter** - Continue current bullet or numbered list (auto-increment)
+- **Shift+Enter** - Simple line break without continuing list
+- **Enter on empty bullet/number** - Exit list mode
+
+### Manual Formatting
+You can also type the markdown syntax directly:
 - `**text**` for bold
 - `*text*` for italic
 - Start line with `•` or `-` for bullets

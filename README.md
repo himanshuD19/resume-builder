@@ -6,8 +6,13 @@ A modern, professional resume builder application with PDF export functionality.
 
 - **One-Click Sample Data**: Fill all fields instantly with professional example data for quick testing
 - **12 Color Themes**: Choose from 12 professional color schemes for your resume (Blue, Indigo, Purple, Green, Teal, Red, Orange, Pink, Slate, Gray, Cyan, Navy)
-- **Dynamic Form Fields**: Add/remove education, work experience, skills, and projects as needed
-- **Rich Text Formatting**: Bold, italic, bullet points, and numbered lists in work experience AND projects
+- **Custom Sections**: Add unlimited custom sections (Certifications, Awards, Publications, Languages, Volunteer Work, etc.)
+- **Dynamic Form Fields**: Add/remove education, work experience, skills, projects, and custom sections as needed
+- **Smart Rich Text Editor**: 
+  - Bold, italic, bullet points, and numbered lists in work experience, projects, AND custom sections
+  - Press **Enter** to auto-continue bullets/numbering
+  - Press **Shift+Enter** for simple line breaks
+  - Auto-increment numbered lists
 - **Professional PDF Generation**: Creates well-formatted, ATS-friendly PDF resumes
 - **Live Preview**: Preview your resume before downloading
 - **Modern UI**: Clean, responsive design with TailwindCSS
@@ -55,18 +60,28 @@ npm run build
 5. **Add Skills**: Organize skills by category (e.g., Programming Languages, Tools, etc.)
 6. **Add Projects**: Showcase your projects with descriptions and technologies used
    - Use the formatting toolbar for **bold**, *italic*, bullets, and numbering
-7. **Preview**: Click "Preview PDF" to see how your resume looks
-8. **Download**: Click "Download PDF" to save your resume
+7. **Add Custom Sections**: Click "Add Custom Section" to add sections like:
+   - Certifications
+   - Awards & Recognition
+   - Publications
+   - Languages
+   - Volunteer Work
+   - Professional Memberships
+   - Or any other section you need!
+8. **Preview**: Click "Preview PDF" to see how your resume looks
+9. **Download**: Click "Download PDF" to save your resume
 
 ## Tips for Best Results
 
 - **Choose the right color**: Select a color theme that matches your industry (e.g., Blue/Navy for corporate, Purple/Teal for creative)
-- Use bullet points in work experience and project descriptions for better readability
+- **Use custom sections strategically**: Add sections that showcase your unique qualifications (Certifications, Awards, Publications)
+- Use bullet points in work experience, projects, and custom sections for better readability
 - Use **bold** for emphasis on key achievements and *italic* for technologies
 - Keep descriptions concise and achievement-focused
 - Fill in all relevant fields for a complete resume
 - Use consistent date formats (e.g., "Jan 2020 - Dec 2022")
 - Add specific technologies and skills to stand out
+- Order custom sections by relevance to the job you're applying for
 
 ## Tech Stack
 

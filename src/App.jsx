@@ -22,10 +22,13 @@ function App() {
     ],
     skills: [{ category: '', items: '' }],
     projects: [{ name: '', description: '', technologies: '', link: '' }],
+    customSections: [], // User-defined custom sections
     colorTheme: 'blue' // Default color theme
   });
 
   const [showPreview, setShowPreview] = useState(false);
+  const [showCustomSectionModal, setShowCustomSectionModal] = useState(false);
+  const [customSectionInput, setCustomSectionInput] = useState('');
 
   const handlePersonalInfoChange = (field, value) => {
     setFormData(prev => ({
@@ -54,6 +57,84 @@ function App() {
     setFormData(prev => ({
       ...prev,
       [section]: prev[section].filter((_, i) => i !== index)
+    }));
+  };
+
+  const addCustomSection = () => {
+    setCustomSectionInput('');
+    setShowCustomSectionModal(true);
+  };
+
+  const handleCustomSectionSubmit = () => {
+    if (customSectionInput && customSectionInput.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        customSections: [...prev.customSections, { 
+          title: customSectionInput.trim(), 
+          items: [{ content: '' }] 
+        }]
+      }));
+      setShowCustomSectionModal(false);
+      setCustomSectionInput('');
+    }
+  };
+
+  const handleCustomSectionCancel = () => {
+    setShowCustomSectionModal(false);
+    setCustomSectionInput('');
+  };
+
+  const removeCustomSection = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      customSections: prev.customSections.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleCustomSectionTitleChange = (sectionIndex, newTitle) => {
+    setFormData(prev => ({
+      ...prev,
+      customSections: prev.customSections.map((section, i) => 
+        i === sectionIndex ? { ...section, title: newTitle } : section
+      )
+    }));
+  };
+
+  const addCustomSectionItem = (sectionIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      customSections: prev.customSections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, items: [...section.items, { content: '' }] }
+          : section
+      )
+    }));
+  };
+
+  const removeCustomSectionItem = (sectionIndex, itemIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      customSections: prev.customSections.map((section, i) => 
+        i === sectionIndex 
+          ? { ...section, items: section.items.filter((_, idx) => idx !== itemIndex) }
+          : section
+      )
+    }));
+  };
+
+  const handleCustomSectionItemChange = (sectionIndex, itemIndex, value) => {
+    setFormData(prev => ({
+      ...prev,
+      customSections: prev.customSections.map((section, i) => 
+        i === sectionIndex 
+          ? { 
+              ...section, 
+              items: section.items.map((item, idx) => 
+                idx === itemIndex ? { content: value } : item
+              ) 
+            }
+          : section
+      )
     }));
   };
 
@@ -174,6 +255,24 @@ function App() {
 • Comprehensive *documentation* and interactive Storybook demos
 • Implements **WCAG 2.1 accessibility standards**
 • Published to *NPM* with 10K+ monthly downloads`
+        }
+      ],
+      customSections: [
+        {
+          title: 'Certifications',
+          items: [
+            { content: '**AWS Certified Solutions Architect** - Amazon Web Services (2023)' },
+            { content: '**Professional Scrum Master (PSM I)** - Scrum.org (2022)' },
+            { content: '**MongoDB Certified Developer** - MongoDB University (2021)' }
+          ]
+        },
+        {
+          title: 'Awards & Recognition',
+          items: [
+            { content: '**Employee of the Year** - TechCorp Solutions (2023)' },
+            { content: '**Best Innovation Award** for microservices architecture implementation' },
+            { content: '**Hackathon Winner** - Internal company hackathon for AI-powered tool (2022)' }
+          ]
         }
       ],
       colorTheme: 'blue'
@@ -573,6 +672,81 @@ function App() {
             ))}
           </section>
 
+          {/* Custom Sections */}
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">
+                Custom Sections
+              </h2>
+              <button
+                onClick={addCustomSection}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
+              >
+                <Plus className="w-4 h-4" />
+                Add Custom Section
+              </button>
+            </div>
+            
+            {formData.customSections.length === 0 ? (
+              <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                <p className="text-gray-600 mb-2">No custom sections yet</p>
+                <p className="text-sm text-gray-500">
+                  Click "Add Custom Section" to add sections like Certifications, Awards, Publications, Languages, Volunteer Work, etc.
+                </p>
+              </div>
+            ) : (
+              formData.customSections.map((section, sectionIndex) => (
+                <div key={sectionIndex} className="mb-6 p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <input
+                      type="text"
+                      placeholder="Section Title"
+                      className="text-lg font-semibold text-gray-800 bg-transparent border-b-2 border-purple-400 focus:border-purple-600 outline-none px-2 py-1"
+                      value={section.title}
+                      onChange={(e) => handleCustomSectionTitleChange(sectionIndex, e.target.value)}
+                    />
+                    <button
+                      onClick={() => removeCustomSection(sectionIndex)}
+                      className="text-red-500 hover:text-red-700 font-semibold"
+                      title="Remove this section"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  {section.items.map((item, itemIndex) => (
+                    <div key={itemIndex} className="mb-3 flex gap-2">
+                      <div className="flex-1">
+                        <RichTextEditor
+                          value={item.content}
+                          onChange={(value) => handleCustomSectionItemChange(sectionIndex, itemIndex, value)}
+                          placeholder="Add content - Use toolbar for bold, italic, bullets, and numbering"
+                        />
+                      </div>
+                      {section.items.length > 1 && (
+                        <button
+                          onClick={() => removeCustomSectionItem(sectionIndex, itemIndex)}
+                          className="text-red-500 hover:text-red-700 self-start mt-2"
+                          title="Remove this item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <button
+                    onClick={() => addCustomSectionItem(sectionIndex)}
+                    className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm mt-2"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Item
+                  </button>
+                </div>
+              ))
+            )}
+          </section>
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <button
@@ -598,6 +772,73 @@ function App() {
           <p className="mt-1">Use "Preview PDF" to see your resume or "Download PDF" to save it.</p>
         </div>
       </div>
+
+      {/* Custom Section Modal */}
+      {showCustomSectionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-slideUp">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Plus className="w-6 h-6" />
+                Add Custom Section
+              </h3>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Section Name
+              </label>
+              <input
+                type="text"
+                value={customSectionInput}
+                onChange={(e) => setCustomSectionInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCustomSectionSubmit();
+                  if (e.key === 'Escape') handleCustomSectionCancel();
+                }}
+                placeholder="e.g., Certifications, Awards, Publications"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
+                autoFocus
+              />
+              
+              {/* Suggestions */}
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-600 mb-2">Popular sections:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Certifications', 'Awards', 'Publications', 'Languages', 'Volunteer Work', 'Memberships'].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setCustomSectionInput(suggestion)}
+                      className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex gap-3 justify-end">
+              <button
+                onClick={handleCustomSectionCancel}
+                className="px-5 py-2 text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCustomSectionSubmit}
+                disabled={!customSectionInput.trim()}
+                className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Section
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
