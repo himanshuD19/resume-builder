@@ -6,7 +6,9 @@ import SectionRenderer from './components/SectionRenderer';
 import LandingPage from './components/LandingPage';
 import AdminPanel from './components/AdminPanel';
 import AdminLogin from './components/AdminLogin';
+import EditResume from './components/EditResume';
 import { trackDownload, trackPreview } from './utils/analytics';
+import { saveToLocalStorage } from './utils/pdfParser';
 
 function App() {
   const [resumeType, setResumeType] = useState(null); // 'with-photo' or 'without-photo'
@@ -43,6 +45,18 @@ function App() {
   const [draggedSection, setDraggedSection] = useState(null);
   const [draggedCustomSection, setDraggedCustomSection] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showEditResume, setShowEditResume] = useState(false);
+
+  // Auto-save to localStorage whenever formData, resumeType, or photo changes
+  useEffect(() => {
+    if (resumeType) {
+      const timer = setTimeout(() => {
+        saveToLocalStorage(formData, resumeType, photo);
+      }, 2000); // Save after 2 seconds of inactivity
+      
+      return () => clearTimeout(timer);
+    }
+  }, [formData, resumeType, photo]);
 
   // Check for admin route and authentication
   useEffect(() => {
@@ -419,6 +433,19 @@ function App() {
     window.location.href = '/';
   };
 
+  const handleLoadData = (loadedData) => {
+    if (loadedData.formData) {
+      setFormData(loadedData.formData);
+    }
+    if (loadedData.resumeType) {
+      setResumeType(loadedData.resumeType);
+    }
+    if (loadedData.photo) {
+      setPhoto(loadedData.photo);
+    }
+    setShowEditResume(false);
+  };
+
   // Helper function to get section configuration
   const getSectionConfig = (sectionKey) => {
     const configs = {
@@ -458,7 +485,20 @@ function App() {
 
   // Show landing page if resume type not selected
   if (!resumeType) {
-    return <LandingPage onSelectType={handleSelectResumeType} />;
+    return (
+      <>
+        <LandingPage 
+          onSelectType={handleSelectResumeType}
+          onEditResume={() => setShowEditResume(true)}
+        />
+        {showEditResume && (
+          <EditResume 
+            onClose={() => setShowEditResume(false)}
+            onLoadData={handleLoadData}
+          />
+        )}
+      </>
+    );
   }
 
   return (

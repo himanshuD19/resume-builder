@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, User, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import { FileText, User, ArrowRight, Sparkles, BookOpen, Edit } from 'lucide-react';
 import UserManual from './UserManual';
 
-const LandingPage = ({ onSelectType }) => {
+const LandingPage = ({ onSelectType, onEditResume }) => {
   const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
@@ -155,14 +155,23 @@ const LandingPage = ({ onSelectType }) => {
             ✨ Both formats support rich text formatting, custom sections, and 12 color themes
           </p>
           
-          {/* View Tutorial Button */}
-          <button
-            onClick={() => setShowManual(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md font-semibold"
-          >
-            <BookOpen className="w-5 h-5" />
-            View Tutorial
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <button
+              onClick={onEditResume}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md font-semibold"
+            >
+              <Edit className="w-5 h-5" />
+              Edit Existing Resume
+            </button>
+            <button
+              onClick={() => setShowManual(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md font-semibold"
+            >
+              <BookOpen className="w-5 h-5" />
+              View Tutorial
+            </button>
+          </div>
         </div>
       </div>
 
