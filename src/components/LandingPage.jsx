@@ -1,7 +1,26 @@
-import React from 'react';
-import { FileText, User, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, User, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import UserManual from './UserManual';
 
 const LandingPage = ({ onSelectType }) => {
+  const [showManual, setShowManual] = useState(false);
+
+  useEffect(() => {
+    // Check if user has seen the manual before
+    const hasSeenManual = localStorage.getItem('resume_builder_manual_seen');
+    if (!hasSeenManual) {
+      // Show manual after a brief delay for better UX
+      setTimeout(() => {
+        setShowManual(true);
+      }, 500);
+    }
+  }, []);
+
+  const handleCloseManual = () => {
+    setShowManual(false);
+    localStorage.setItem('resume_builder_manual_seen', 'true');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-6xl w-full">
@@ -131,12 +150,24 @@ const LandingPage = ({ onSelectType }) => {
         </div>
 
         {/* Footer Info */}
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center space-y-4">
           <p className="text-gray-500 text-sm">
             ✨ Both formats support rich text formatting, custom sections, and 12 color themes
           </p>
+          
+          {/* View Tutorial Button */}
+          <button
+            onClick={() => setShowManual(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md font-semibold"
+          >
+            <BookOpen className="w-5 h-5" />
+            View Tutorial
+          </button>
         </div>
       </div>
+
+      {/* User Manual Modal */}
+      {showManual && <UserManual onClose={handleCloseManual} />}
     </div>
   );
 };
