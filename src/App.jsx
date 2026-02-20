@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { FileText, Plus, Trash2, Eye, Download, Sparkles, Palette, GripVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Plus, Trash2, Eye, Download, Sparkles, Palette, GripVertical, Upload, X, BarChart3 } from 'lucide-react';
 import { generatePDF, previewPDF } from './utils/pdfGenerator';
 import RichTextEditor from './components/RichTextEditor';
 import SectionRenderer from './components/SectionRenderer';
+import LandingPage from './components/LandingPage';
+import AdminPanel from './components/AdminPanel';
+import AdminLogin from './components/AdminLogin';
+import { trackDownload, trackPreview } from './utils/analytics';
 
 function App() {
+  const [resumeType, setResumeType] = useState(null); // 'with-photo' or 'without-photo'
+  const [photo, setPhoto] = useState(null); // Base64 encoded photo
+  const [isAdminRoute, setIsAdminRoute] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  
   const [formData, setFormData] = useState({
     personalInfo: {
       fullName: '',
@@ -33,6 +42,21 @@ function App() {
   const [customSectionInput, setCustomSectionInput] = useState('');
   const [draggedSection, setDraggedSection] = useState(null);
   const [draggedCustomSection, setDraggedCustomSection] = useState(null);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  // Check for admin route and authentication
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/admin') {
+      setIsAdminRoute(true);
+      // Check if already authenticated
+      const authToken = sessionStorage.getItem('admin_auth');
+      if (authToken === 'authenticated') {
+        setIsAdminAuthenticated(true);
+        setShowAdmin(true);
+      }
+    }
+  }, []);
 
   const handlePersonalInfoChange = (field, value) => {
     setFormData(prev => ({
@@ -348,12 +372,51 @@ function App() {
   };
 
   const handlePreview = () => {
-    previewPDF(formData, sectionOrder);
+    previewPDF(formData, sectionOrder, photo);
     setShowPreview(true);
+    trackPreview(resumeType, formData.colorTheme);
   };
 
   const handleDownload = () => {
-    generatePDF(formData, sectionOrder);
+    generatePDF(formData, sectionOrder, photo);
+    trackDownload(resumeType, formData.colorTheme);
+  };
+
+  const handleSelectResumeType = (type) => {
+    setResumeType(type);
+    // Clear photo if switching to without-photo type
+    if (type === 'without-photo') {
+      setPhoto(null);
+    }
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhoto(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhoto(null);
+  };
+
+  const handleAdminLogin = () => {
+    setIsAdminAuthenticated(true);
+    setShowAdmin(true);
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem('admin_user');
+    sessionStorage.removeItem('admin_login_time');
+    setIsAdminAuthenticated(false);
+    setShowAdmin(false);
+    window.location.href = '/';
   };
 
   // Helper function to get section configuration
@@ -383,6 +446,21 @@ function App() {
     return configs[sectionKey];
   };
 
+  // Show admin login if on admin route and not authenticated
+  if (isAdminRoute && !isAdminAuthenticated) {
+    return <AdminLogin onLoginSuccess={handleAdminLogin} />;
+  }
+
+  // Show admin panel if on admin route and authenticated
+  if (isAdminRoute && isAdminAuthenticated) {
+    return <AdminPanel onClose={handleAdminLogout} />;
+  }
+
+  // Show landing page if resume type not selected
+  if (!resumeType) {
+    return <LandingPage onSelectType={handleSelectResumeType} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-5xl mx-auto">
@@ -393,17 +471,31 @@ function App() {
               <div className="flex items-center gap-3 mb-2">
                 <FileText className="w-8 h-8 text-indigo-600" />
                 <h1 className="text-3xl font-bold text-gray-800">Resume Builder</h1>
+                {resumeType === 'with-photo' && (
+                  <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-semibold">
+                    With Photo
+                  </span>
+                )}
               </div>
               <p className="text-gray-600">Create your professional resume with ease</p>
             </div>
-            <button
-              onClick={fillSampleData}
-              className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold shadow-md whitespace-nowrap"
-              title="Fill form with sample data for quick preview"
-            >
-              <Sparkles className="w-5 h-5" />
-              Fill Sample Data
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setResumeType(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                title="Change resume type"
+              >
+                Change Type
+              </button>
+              <button
+                onClick={fillSampleData}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold shadow-md whitespace-nowrap"
+                title="Fill form with sample data for quick preview"
+              >
+                <Sparkles className="w-5 h-5" />
+                Fill Sample Data
+              </button>
+            </div>
           </div>
         </div>
 
@@ -456,6 +548,69 @@ function App() {
             <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-indigo-600 pb-2">
               Personal Information
             </h2>
+            
+            {/* Photo Upload - Only for with-photo resumes */}
+            {resumeType === 'with-photo' && (
+              <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-purple-600" />
+                  Professional Photo
+                </h3>
+                {!photo ? (
+                  <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-purple-300 rounded-lg bg-white hover:bg-purple-50 transition-colors cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                      id="photo-upload"
+                    />
+                    <label htmlFor="photo-upload" className="cursor-pointer text-center">
+                      <Upload className="w-12 h-12 text-purple-400 mx-auto mb-2" />
+                      <p className="text-gray-700 font-medium mb-1">Click to upload photo</p>
+                      <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                      <p className="text-xs text-gray-400 mt-2">Recommended: Professional headshot, square format</p>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-4">
+                    <div className="relative">
+                      <img
+                        src={photo}
+                        alt="Profile"
+                        className="w-32 h-32 object-cover rounded-lg border-4 border-white shadow-lg"
+                      />
+                      <button
+                        onClick={handleRemovePhoto}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
+                        title="Remove photo"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600 mb-2">
+                        ✓ Photo uploaded successfully
+                      </p>
+                      <label
+                        htmlFor="photo-upload-change"
+                        className="inline-block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition cursor-pointer text-sm font-medium"
+                      >
+                        Change Photo
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        id="photo-upload-change"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"

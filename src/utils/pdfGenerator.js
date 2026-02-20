@@ -163,16 +163,41 @@ function renderFormattedLine(doc, parts, x, y, maxWidth) {
 // Custom sections always appear after the main sections
 // TODO: Refactor section rendering to use sectionOrder parameter for dynamic ordering
 
-export function generatePDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects']) {
+export function generatePDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects'], photo = null) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
   let yPos = MARGINS.top;
+
+  // Add photo if provided (top-right corner)
+  let photoHeight = 0;
+  if (photo) {
+    const photoSize = 35; // 35mm square
+    const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
+    const photoY = MARGINS.top;
+    photoHeight = photoSize + 5; // Track photo height for text positioning
+    
+    try {
+      doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
+      // Add border around photo
+      doc.setDrawColor(COLORS.primary);
+      doc.setLineWidth(0.8);
+      doc.rect(photoX, photoY, photoSize, photoSize);
+    } catch (error) {
+      console.error('Error adding photo to PDF:', error);
+    }
+  }
 
   // Header - Name and Contact Info
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(COLORS.primary);
-  doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
+  
+  // If photo exists, align name to the left, otherwise center
+  if (photo) {
+    doc.text(formData.personalInfo.fullName || 'Your Name', MARGINS.left, yPos);
+  } else {
+    doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
+  }
   yPos += 8;
 
   // Contact Information
@@ -186,8 +211,19 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   if (formData.personalInfo.address) contactInfo.push(formData.personalInfo.address);
   
   if (contactInfo.length > 0) {
-    doc.text(contactInfo.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
-    yPos += 5;
+    if (photo) {
+      // Left-align when photo is present, limit width to avoid photo (40mm for photo + margin)
+      const maxWidth = PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left;
+      const contactText = contactInfo.join(' | ');
+      const wrappedContact = doc.splitTextToSize(contactText, maxWidth);
+      wrappedContact.forEach(line => {
+        doc.text(line, MARGINS.left, yPos);
+        yPos += 4;
+      });
+    } else {
+      doc.text(contactInfo.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+      yPos += 5;
+    }
   }
 
   const links = [];
@@ -195,10 +231,25 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   if (formData.personalInfo.portfolio) links.push(formData.personalInfo.portfolio);
   
   if (links.length > 0) {
-    doc.text(links.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
-    yPos += 5;
+    if (photo) {
+      const maxWidth = PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left;
+      const linksText = links.join(' | ');
+      const wrappedLinks = doc.splitTextToSize(linksText, maxWidth);
+      wrappedLinks.forEach(line => {
+        doc.text(line, MARGINS.left, yPos);
+        yPos += 4;
+      });
+    } else {
+      doc.text(links.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+      yPos += 5;
+    }
   }
 
+  // Ensure we're below the photo before continuing
+  if (photo && yPos < photoHeight + MARGINS.top) {
+    yPos = photoHeight + MARGINS.top;
+  }
+  
   yPos += 5;
 
   // Professional Summary
@@ -210,7 +261,12 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(COLORS.text);
     
-    const summaryLines = wrapText(doc, formData.personalInfo.summary, CONTENT_WIDTH);
+    // Use reduced width if photo exists and we're still in photo area
+    const summaryWidth = (photo && yPos < photoHeight + MARGINS.top + 10) 
+      ? PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left 
+      : CONTENT_WIDTH;
+    
+    const summaryLines = wrapText(doc, formData.personalInfo.summary, summaryWidth);
     summaryLines.forEach(line => {
       yPos = checkPageBreak(doc, yPos, 5);
       doc.text(line, MARGINS.left, yPos);
@@ -850,17 +906,40 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   doc.save(fileName);
 }
 
-export function previewPDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects']) {
+export function previewPDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects'], photo = null) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
   let yPos = MARGINS.top;
+
+  // Add photo if provided (top-right corner)
+  let photoHeight = 0;
+  if (photo) {
+    const photoSize = 35;
+    const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
+    const photoY = MARGINS.top;
+    photoHeight = photoSize + 5;
+    
+    try {
+      doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
+      doc.setDrawColor(COLORS.primary);
+      doc.setLineWidth(0.8);
+      doc.rect(photoX, photoY, photoSize, photoSize);
+    } catch (error) {
+      console.error('Error adding photo to PDF preview:', error);
+    }
+  }
 
   // Same PDF generation logic as above
   // Header - Name and Contact Info
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(COLORS.primary);
-  doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
+  
+  if (photo) {
+    doc.text(formData.personalInfo.fullName || 'Your Name', MARGINS.left, yPos);
+  } else {
+    doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
+  }
   yPos += 8;
 
   // Contact Information
@@ -874,8 +953,18 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   if (formData.personalInfo.address) contactInfo.push(formData.personalInfo.address);
   
   if (contactInfo.length > 0) {
-    doc.text(contactInfo.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
-    yPos += 5;
+    if (photo) {
+      const maxWidth = PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left;
+      const contactText = contactInfo.join(' | ');
+      const wrappedContact = doc.splitTextToSize(contactText, maxWidth);
+      wrappedContact.forEach(line => {
+        doc.text(line, MARGINS.left, yPos);
+        yPos += 4;
+      });
+    } else {
+      doc.text(contactInfo.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+      yPos += 5;
+    }
   }
 
   const links = [];
@@ -883,8 +972,22 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   if (formData.personalInfo.portfolio) links.push(formData.personalInfo.portfolio);
   
   if (links.length > 0) {
-    doc.text(links.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
-    yPos += 5;
+    if (photo) {
+      const maxWidth = PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left;
+      const linksText = links.join(' | ');
+      const wrappedLinks = doc.splitTextToSize(linksText, maxWidth);
+      wrappedLinks.forEach(line => {
+        doc.text(line, MARGINS.left, yPos);
+        yPos += 4;
+      });
+    } else {
+      doc.text(links.join(' | '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+      yPos += 5;
+    }
+  }
+
+  if (photo && yPos < photoHeight + MARGINS.top) {
+    yPos = photoHeight + MARGINS.top;
   }
 
   yPos += 5;
@@ -898,7 +1001,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(COLORS.text);
     
-    const summaryLines = wrapText(doc, formData.personalInfo.summary, CONTENT_WIDTH);
+    const summaryWidth = (photo && yPos < photoHeight + MARGINS.top + 10) 
+      ? PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left 
+      : CONTENT_WIDTH;
+    
+    const summaryLines = wrapText(doc, formData.personalInfo.summary, summaryWidth);
     summaryLines.forEach(line => {
       yPos = checkPageBreak(doc, yPos, 5);
       doc.text(line, MARGINS.left, yPos);
