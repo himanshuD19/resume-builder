@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FileText, Plus, Trash2, Eye, Download, Sparkles, Palette } from 'lucide-react';
+import { FileText, Plus, Trash2, Eye, Download, Sparkles, Palette, GripVertical } from 'lucide-react';
 import { generatePDF, previewPDF } from './utils/pdfGenerator';
 import RichTextEditor from './components/RichTextEditor';
+import SectionRenderer from './components/SectionRenderer';
 
 function App() {
   const [formData, setFormData] = useState({
@@ -26,9 +27,12 @@ function App() {
     colorTheme: 'blue' // Default color theme
   });
 
+  const [sectionOrder, setSectionOrder] = useState(['education', 'experience', 'skills', 'projects']);
   const [showPreview, setShowPreview] = useState(false);
   const [showCustomSectionModal, setShowCustomSectionModal] = useState(false);
   const [customSectionInput, setCustomSectionInput] = useState('');
+  const [draggedSection, setDraggedSection] = useState(null);
+  const [draggedCustomSection, setDraggedCustomSection] = useState(null);
 
   const handlePersonalInfoChange = (field, value) => {
     setFormData(prev => ({
@@ -136,6 +140,70 @@ function App() {
           : section
       )
     }));
+  };
+
+  // Drag and drop handlers for main sections
+  const handleSectionDragStart = (e, sectionKey) => {
+    setDraggedSection(sectionKey);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleSectionDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleSectionDrop = (e, targetSectionKey) => {
+    e.preventDefault();
+    if (draggedSection && draggedSection !== targetSectionKey) {
+      const newOrder = [...sectionOrder];
+      const draggedIndex = newOrder.indexOf(draggedSection);
+      const targetIndex = newOrder.indexOf(targetSectionKey);
+      
+      // Remove dragged item and insert at target position
+      newOrder.splice(draggedIndex, 1);
+      newOrder.splice(targetIndex, 0, draggedSection);
+      
+      setSectionOrder(newOrder);
+    }
+    setDraggedSection(null);
+  };
+
+  const handleSectionDragEnd = () => {
+    setDraggedSection(null);
+  };
+
+  // Drag and drop handlers for custom sections
+  const handleCustomSectionDragStart = (e, index) => {
+    setDraggedCustomSection(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleCustomSectionDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleCustomSectionDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedCustomSection !== null && draggedCustomSection !== targetIndex) {
+      const newCustomSections = [...formData.customSections];
+      const draggedItem = newCustomSections[draggedCustomSection];
+      
+      // Remove dragged item and insert at target position
+      newCustomSections.splice(draggedCustomSection, 1);
+      newCustomSections.splice(targetIndex, 0, draggedItem);
+      
+      setFormData(prev => ({
+        ...prev,
+        customSections: newCustomSections
+      }));
+    }
+    setDraggedCustomSection(null);
+  };
+
+  const handleCustomSectionDragEnd = () => {
+    setDraggedCustomSection(null);
   };
 
   const fillSampleData = () => {
@@ -280,12 +348,39 @@ function App() {
   };
 
   const handlePreview = () => {
-    previewPDF(formData);
+    previewPDF(formData, sectionOrder);
     setShowPreview(true);
   };
 
   const handleDownload = () => {
-    generatePDF(formData);
+    generatePDF(formData, sectionOrder);
+  };
+
+  // Helper function to get section configuration
+  const getSectionConfig = (sectionKey) => {
+    const configs = {
+      education: {
+        title: 'Education',
+        addButtonText: 'Add Education',
+        template: { degree: '', institution: '', location: '', startDate: '', endDate: '', gpa: '' }
+      },
+      experience: {
+        title: 'Work Experience',
+        addButtonText: 'Add Experience',
+        template: { title: '', company: '', location: '', startDate: '', endDate: '', description: '' }
+      },
+      skills: {
+        title: 'Skills',
+        addButtonText: 'Add Skill Category',
+        template: { category: '', items: '' }
+      },
+      projects: {
+        title: 'Projects',
+        addButtonText: 'Add Project',
+        template: { name: '', description: '', technologies: '', link: '' }
+      }
+    };
+    return configs[sectionKey];
   };
 
   return (
@@ -414,263 +509,22 @@ function App() {
             />
           </section>
 
-          {/* Education */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">
-                Education
-              </h2>
-              <button
-                onClick={() => addArrayField('education', { degree: '', institution: '', location: '', startDate: '', endDate: '', gpa: '' })}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                <Plus className="w-4 h-4" />
-                Add Education
-              </button>
-            </div>
-            {formData.education.map((edu, index) => (
-              <div key={index} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-gray-700">Education {index + 1}</h3>
-                  {formData.education.length > 1 && (
-                    <button
-                      onClick={() => removeArrayField('education', index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Degree/Certification"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.degree}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'degree', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Institution"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.institution}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'institution', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Location"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.location}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'location', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="GPA (optional)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.gpa}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'gpa', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Start Date (e.g., Aug 2020)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.startDate}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'startDate', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="End Date (e.g., May 2024)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={edu.endDate}
-                    onChange={(e) => handleArrayFieldChange('education', index, 'endDate', e.target.value)}
-                  />
-                </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Work Experience */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">
-                Work Experience
-              </h2>
-              <button
-                onClick={() => addArrayField('experience', { title: '', company: '', location: '', startDate: '', endDate: '', description: '' })}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                <Plus className="w-4 h-4" />
-                Add Experience
-              </button>
-            </div>
-            {formData.experience.map((exp, index) => (
-              <div key={index} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-gray-700">Experience {index + 1}</h3>
-                  {formData.experience.length > 1 && (
-                    <button
-                      onClick={() => removeArrayField('experience', index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Job Title"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={exp.title}
-                    onChange={(e) => handleArrayFieldChange('experience', index, 'title', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Company"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={exp.company}
-                    onChange={(e) => handleArrayFieldChange('experience', index, 'company', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Location"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={exp.location}
-                    onChange={(e) => handleArrayFieldChange('experience', index, 'location', e.target.value)}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Start Date"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      value={exp.startDate}
-                      onChange={(e) => handleArrayFieldChange('experience', index, 'startDate', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      placeholder="End Date"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      value={exp.endDate}
-                      onChange={(e) => handleArrayFieldChange('experience', index, 'endDate', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <RichTextEditor
-                    value={exp.description}
-                    onChange={(value) => handleArrayFieldChange('experience', index, 'description', value)}
-                    placeholder="Job Description - Use the toolbar to format text with bold, italic, bullets, and numbering"
-                  />
-                </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Skills */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">
-                Skills
-              </h2>
-              <button
-                onClick={() => addArrayField('skills', { category: '', items: '' })}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                <Plus className="w-4 h-4" />
-                Add Skill Category
-              </button>
-            </div>
-            {formData.skills.map((skill, index) => (
-              <div key={index} className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-gray-700">Skill Category {index + 1}</h3>
-                  {formData.skills.length > 1 && (
-                    <button
-                      onClick={() => removeArrayField('skills', index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Category (e.g., Programming Languages)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={skill.category}
-                    onChange={(e) => handleArrayFieldChange('skills', index, 'category', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Skills (comma separated)"
-                    className="w-full md:col-span-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={skill.items}
-                    onChange={(e) => handleArrayFieldChange('skills', index, 'items', e.target.value)}
-                  />
-                </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Projects */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800 border-b-2 border-indigo-600 pb-2">
-                Projects
-              </h2>
-              <button
-                onClick={() => addArrayField('projects', { name: '', description: '', technologies: '', link: '' })}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                <Plus className="w-4 h-4" />
-                Add Project
-              </button>
-            </div>
-            {formData.projects.map((project, index) => (
-              <div key={index} className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-gray-700">Project {index + 1}</h3>
-                  {formData.projects.length > 1 && (
-                    <button
-                      onClick={() => removeArrayField('projects', index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Project Name"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={project.name}
-                    onChange={(e) => handleArrayFieldChange('projects', index, 'name', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Technologies Used (comma separated)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={project.technologies}
-                    onChange={(e) => handleArrayFieldChange('projects', index, 'technologies', e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Project Link (optional)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={project.link}
-                    onChange={(e) => handleArrayFieldChange('projects', index, 'link', e.target.value)}
-                  />
-                  <RichTextEditor
-                    value={project.description}
-                    onChange={(value) => handleArrayFieldChange('projects', index, 'description', value)}
-                    placeholder="Project Description - Use the toolbar to format text with bold, italic, bullets, and numbering"
-                  />
-                </div>
-              </div>
-            ))}
-          </section>
+          {/* Main Sections - Draggable and Reorderable */}
+          {sectionOrder.map((sectionKey) => (
+            <SectionRenderer
+              key={sectionKey}
+              sectionKey={sectionKey}
+              formData={formData}
+              handleArrayFieldChange={handleArrayFieldChange}
+              addArrayField={addArrayField}
+              removeArrayField={removeArrayField}
+              onDragStart={handleSectionDragStart}
+              onDragOver={handleSectionDragOver}
+              onDrop={handleSectionDrop}
+              onDragEnd={handleSectionDragEnd}
+              isDragging={draggedSection === sectionKey}
+            />
+          ))}
 
           {/* Custom Sections */}
           <section className="mb-8">
@@ -696,15 +550,28 @@ function App() {
               </div>
             ) : (
               formData.customSections.map((section, sectionIndex) => (
-                <div key={sectionIndex} className="mb-6 p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                <div 
+                  key={sectionIndex} 
+                  className={`mb-6 p-4 border-2 border-purple-200 rounded-lg bg-purple-50 transition-all ${draggedCustomSection === sectionIndex ? 'opacity-50' : 'opacity-100'}`}
+                  draggable
+                  onDragStart={(e) => handleCustomSectionDragStart(e, sectionIndex)}
+                  onDragOver={handleCustomSectionDragOver}
+                  onDrop={(e) => handleCustomSectionDrop(e, sectionIndex)}
+                  onDragEnd={handleCustomSectionDragEnd}
+                >
                   <div className="flex justify-between items-center mb-4">
-                    <input
-                      type="text"
-                      placeholder="Section Title"
-                      className="text-lg font-semibold text-gray-800 bg-transparent border-b-2 border-purple-400 focus:border-purple-600 outline-none px-2 py-1"
-                      value={section.title}
-                      onChange={(e) => handleCustomSectionTitleChange(sectionIndex, e.target.value)}
-                    />
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className="cursor-move text-purple-400 hover:text-purple-600 transition-colors">
+                        <GripVertical className="w-5 h-5" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Section Title"
+                        className="text-lg font-semibold text-gray-800 bg-transparent border-b-2 border-purple-400 focus:border-purple-600 outline-none px-2 py-1 flex-1"
+                        value={section.title}
+                        onChange={(e) => handleCustomSectionTitleChange(sectionIndex, e.target.value)}
+                      />
+                    </div>
                     <button
                       onClick={() => removeCustomSection(sectionIndex)}
                       className="text-red-500 hover:text-red-700 font-semibold"

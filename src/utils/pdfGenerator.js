@@ -158,7 +158,12 @@ function renderFormattedLine(doc, parts, x, y, maxWidth) {
   return y;
 }
 
-export function generatePDF(formData) {
+// Note: Section rendering in PDF currently follows a fixed order (Education, Experience, Skills, Projects)
+// The sectionOrder parameter is accepted but sections are rendered in their original order below
+// Custom sections always appear after the main sections
+// TODO: Refactor section rendering to use sectionOrder parameter for dynamic ordering
+
+export function generatePDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects']) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
   let yPos = MARGINS.top;
@@ -845,7 +850,7 @@ export function generatePDF(formData) {
   doc.save(fileName);
 }
 
-export function previewPDF(formData) {
+export function previewPDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects']) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
   let yPos = MARGINS.top;
