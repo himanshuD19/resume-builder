@@ -157,13 +157,18 @@ const LandingPage = ({ onSelectType, onEditResume }) => {
           
           {/* Action Buttons */}
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <button
-              onClick={onEditResume}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md font-semibold"
-            >
-              <Edit className="w-5 h-5" />
-              Edit Existing Resume
-            </button>
+            <div className="relative group">
+              <button
+                disabled
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg cursor-not-allowed shadow-md font-semibold opacity-75"
+              >
+                <Edit className="w-5 h-5" />
+                Edit Existing Resume
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                🚀 Coming Soon!
+              </div>
+            </div>
             <button
               onClick={() => setShowManual(true)}
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md font-semibold"

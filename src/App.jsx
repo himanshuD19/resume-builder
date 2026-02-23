@@ -26,16 +26,13 @@ function App() {
       portfolio: '',
       summary: ''
     },
-    education: [
-      { degree: '', institution: '', location: '', startDate: '', endDate: '', gpa: '' }
-    ],
-    experience: [
-      { title: '', company: '', location: '', startDate: '', endDate: '', description: '' }
-    ],
-    skills: [{ category: '', items: '' }],
-    projects: [{ name: '', description: '', technologies: '', link: '' }],
-    customSections: [], // User-defined custom sections
-    colorTheme: 'blue' // Default color theme
+    education: [],
+    experience: [],
+    skills: [],
+    projects: [],
+    customSections: [],
+    colorTheme: 'blue', // Default color theme
+    fontStyle: 'helvetica' // Default font style
   });
 
   const [sectionOrder, setSectionOrder] = useState(['education', 'experience', 'skills', 'projects']);
@@ -577,6 +574,43 @@ function App() {
                   <span className="text-xs font-medium text-gray-700">{theme.name}</span>
                   {formData.colorTheme === theme.value && (
                     <span className="text-xs text-indigo-600 font-semibold">✓ Selected</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Font Style Selection */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-indigo-600 pb-2 flex items-center gap-2">
+              <Palette className="w-6 h-6" />
+              Font Style
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">Choose a font style for your resume</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { name: 'Helvetica', value: 'helvetica', description: 'Clean and professional' },
+                { name: 'Times New Roman', value: 'times', description: 'Classic and traditional' },
+                { name: 'Courier', value: 'courier', description: 'Modern monospace' },
+                { name: 'Arial', value: 'arial', description: 'Simple and readable' },
+                { name: 'Georgia', value: 'georgia', description: 'Elegant serif' },
+                { name: 'Palatino', value: 'palatino', description: 'Sophisticated style' }
+              ].map((font) => (
+                <button
+                  key={font.value}
+                  onClick={() => setFormData(prev => ({ ...prev, fontStyle: font.value }))}
+                  className={`flex flex-col items-start gap-1 p-4 rounded-lg border-2 transition-all text-left ${
+                    formData.fontStyle === font.value
+                      ? 'border-indigo-600 bg-indigo-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-lg font-semibold text-gray-800" style={{ fontFamily: font.value === 'times' ? 'Times New Roman' : font.value === 'courier' ? 'Courier New' : font.value === 'arial' ? 'Arial' : font.value === 'georgia' ? 'Georgia' : font.value === 'palatino' ? 'Palatino' : 'Helvetica' }}>
+                    {font.name}
+                  </span>
+                  <span className="text-xs text-gray-500">{font.description}</span>
+                  {formData.fontStyle === font.value && (
+                    <span className="text-xs text-indigo-600 font-semibold mt-1">✓ Selected</span>
                   )}
                 </button>
               ))}

@@ -34,6 +34,19 @@ const PAGE_WIDTH = 210; // A4 width in mm
 const PAGE_HEIGHT = 297; // A4 height in mm
 const CONTENT_WIDTH = PAGE_WIDTH - MARGINS.left - MARGINS.right;
 
+// Font mapping for jsPDF
+const getFontFamily = (fontStyle) => {
+  const fontMap = {
+    'helvetica': 'helvetica',
+    'times': 'times',
+    'courier': 'courier',
+    'arial': 'helvetica', // Arial maps to Helvetica in jsPDF
+    'georgia': 'times', // Georgia maps to Times in jsPDF
+    'palatino': 'times' // Palatino maps to Times in jsPDF
+  };
+  return fontMap[fontStyle] || 'helvetica';
+};
+
 // Helper function to wrap text
 function wrapText(doc, text, maxWidth) {
   const lines = doc.splitTextToSize(text, maxWidth);
@@ -41,9 +54,9 @@ function wrapText(doc, text, maxWidth) {
 }
 
 // Helper function to add section header
-function addSectionHeader(doc, text, yPos, COLORS) {
+function addSectionHeader(doc, text, yPos, COLORS, fontFamily = 'helvetica') {
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(fontFamily, 'bold');
   doc.setTextColor(COLORS.primary);
   doc.text(text.toUpperCase(), MARGINS.left, yPos);
   
@@ -128,11 +141,11 @@ function renderFormattedLine(doc, parts, x, y, maxWidth) {
     if (part.bold && part.italic) {
       doc.setFont('helvetica', 'bolditalic');
     } else if (part.bold) {
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
     } else if (part.italic) {
       doc.setFont('helvetica', 'italic');
     } else {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(FONT_FAMILY, 'normal');
     }
     
     // Split text if it exceeds maxWidth
@@ -153,7 +166,7 @@ function renderFormattedLine(doc, parts, x, y, maxWidth) {
   });
   
   // Reset to normal font
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT_FAMILY, 'normal');
   
   return y;
 }
@@ -166,6 +179,7 @@ function renderFormattedLine(doc, parts, x, y, maxWidth) {
 export function generatePDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects'], photo = null) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
+  const FONT_FAMILY = getFontFamily(formData.fontStyle || 'helvetica');
   let yPos = MARGINS.top;
 
   // Add photo if provided (top-right corner)
@@ -189,7 +203,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
 
   // Header - Name and Contact Info
   doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT_FAMILY, 'bold');
   doc.setTextColor(COLORS.primary);
   
   // If photo exists, align name to the left, otherwise center
@@ -202,7 +216,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
 
   // Contact Information
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT_FAMILY, 'normal');
   doc.setTextColor(COLORS.secondary);
   
   const contactInfo = [];
@@ -255,10 +269,10 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   // Professional Summary
   if (formData.personalInfo.summary && formData.personalInfo.summary.trim()) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Professional Summary', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Professional Summary', yPos, COLORS, FONT_FAMILY);
     
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(FONT_FAMILY, 'normal');
     doc.setTextColor(COLORS.text);
     
     // Use reduced width if photo exists and we're still in photo area
@@ -282,7 +296,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   
   if (hasEducation) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Education', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Education', yPos, COLORS, FONT_FAMILY);
     
     formData.education.forEach(edu => {
       if (!edu.degree && !edu.institution) return;
@@ -291,13 +305,13 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       
       // Degree and Institution
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(FONT_FAMILY, 'normal');
       doc.setTextColor(COLORS.secondary);
       
       let institutionLine = edu.institution || '';
@@ -330,7 +344,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   
   if (hasExperience) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Work Experience', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Work Experience', yPos, COLORS, FONT_FAMILY);
     
     formData.experience.forEach(exp => {
       if (!exp.title && !exp.company) return;
@@ -339,14 +353,14 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       
       // Job Title
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(exp.title || 'Position', MARGINS.left, yPos);
       yPos += 5;
       
       // Company and Location
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(FONT_FAMILY, 'normal');
       doc.setTextColor(COLORS.secondary);
       
       let companyLine = exp.company || '';
@@ -374,7 +388,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left + 2, yPos);
             
             // Parse formatting in bullet text
@@ -389,11 +403,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -422,7 +436,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left + 2, yPos);
               
               // Parse formatting in numbered text
@@ -437,11 +451,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 // Wrap text manually
@@ -477,11 +491,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -518,7 +532,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   
   if (hasSkills) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Skills', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Skills', yPos, COLORS, FONT_FAMILY);
     
     formData.skills.forEach(skill => {
       if (!skill.category && !skill.items) return;
@@ -526,7 +540,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       yPos = checkPageBreak(doc, yPos, 10);
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       
       if (skill.category) {
@@ -535,7 +549,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       }
       
       if (skill.items) {
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(FONT_FAMILY, 'normal');
         doc.setTextColor(COLORS.secondary);
         const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
         skillLines.forEach(line => {
@@ -557,7 +571,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   
   if (hasProjects) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Projects', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Projects', yPos, COLORS, FONT_FAMILY);
     
     formData.projects.forEach(project => {
       if (!project.name) return;
@@ -566,7 +580,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       
       // Project Name
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(project.name, MARGINS.left, yPos);
       yPos += 5;
@@ -583,7 +597,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Link
       if (project.link) {
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(FONT_FAMILY, 'normal');
         doc.setTextColor('#2563eb');
         doc.text(project.link, MARGINS.left, yPos);
         yPos += 5;
@@ -603,7 +617,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left + 2, yPos);
             
             // Parse formatting in bullet text
@@ -618,11 +632,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -651,7 +665,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left + 2, yPos);
               
               // Parse formatting in numbered text
@@ -666,11 +680,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 // Wrap text manually
@@ -706,11 +720,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -747,7 +761,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       if (!customSection.title || !customSection.items || customSection.items.length === 0) return;
       
       yPos = checkPageBreak(doc, yPos, 20);
-      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS);
+      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS, FONT_FAMILY);
       
       customSection.items.forEach(item => {
         if (!item.content || !item.content.trim()) return;
@@ -766,7 +780,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left, yPos);
             
             const parts = parseFormattedText(bulletText);
@@ -779,11 +793,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
@@ -811,7 +825,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left, yPos);
               
               const parts = parseFormattedText(text);
@@ -824,11 +838,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 const words = part.text.split(' ');
@@ -862,11 +876,11 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
@@ -909,6 +923,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
 export function previewPDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects'], photo = null) {
   const doc = new jsPDF();
   const COLORS = getColors(formData.colorTheme);
+  const FONT_FAMILY = getFontFamily(formData.fontStyle || 'helvetica');
   let yPos = MARGINS.top;
 
   // Add photo if provided (top-right corner)
@@ -932,7 +947,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   // Same PDF generation logic as above
   // Header - Name and Contact Info
   doc.setFontSize(24);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT_FAMILY, 'bold');
   doc.setTextColor(COLORS.primary);
   
   if (photo) {
@@ -944,7 +959,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
 
   // Contact Information
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT_FAMILY, 'normal');
   doc.setTextColor(COLORS.secondary);
   
   const contactInfo = [];
@@ -995,10 +1010,10 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   // Professional Summary
   if (formData.personalInfo.summary && formData.personalInfo.summary.trim()) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Professional Summary', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Professional Summary', yPos, COLORS, FONT_FAMILY);
     
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(FONT_FAMILY, 'normal');
     doc.setTextColor(COLORS.text);
     
     const summaryWidth = (photo && yPos < photoHeight + MARGINS.top + 10) 
@@ -1021,7 +1036,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   
   if (hasEducation) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Education', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Education', yPos, COLORS, FONT_FAMILY);
     
     formData.education.forEach(edu => {
       if (!edu.degree && !edu.institution) return;
@@ -1029,13 +1044,13 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       yPos = checkPageBreak(doc, yPos, 15);
       
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(FONT_FAMILY, 'normal');
       doc.setTextColor(COLORS.secondary);
       
       let institutionLine = edu.institution || '';
@@ -1066,7 +1081,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   
   if (hasExperience) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Work Experience', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Work Experience', yPos, COLORS, FONT_FAMILY);
     
     formData.experience.forEach(exp => {
       if (!exp.title && !exp.company) return;
@@ -1074,13 +1089,13 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       yPos = checkPageBreak(doc, yPos, 15);
       
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(exp.title || 'Position', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont(FONT_FAMILY, 'normal');
       doc.setTextColor(COLORS.secondary);
       
       let companyLine = exp.company || '';
@@ -1107,7 +1122,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left + 2, yPos);
             
             // Parse formatting in bullet text
@@ -1122,11 +1137,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -1155,7 +1170,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left + 2, yPos);
               
               // Parse formatting in numbered text
@@ -1170,11 +1185,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 // Wrap text manually
@@ -1210,11 +1225,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               // Wrap text manually
@@ -1251,7 +1266,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   
   if (hasSkills) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Skills', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Skills', yPos, COLORS, FONT_FAMILY);
     
     formData.skills.forEach(skill => {
       if (!skill.category && !skill.items) return;
@@ -1259,7 +1274,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       yPos = checkPageBreak(doc, yPos, 10);
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       
       if (skill.category) {
@@ -1268,7 +1283,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       }
       
       if (skill.items) {
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(FONT_FAMILY, 'normal');
         doc.setTextColor(COLORS.secondary);
         const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
         skillLines.forEach(line => {
@@ -1290,7 +1305,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   
   if (hasProjects) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Projects', yPos, COLORS);
+    yPos = addSectionHeader(doc, 'Projects', yPos, COLORS, FONT_FAMILY);
     
     formData.projects.forEach(project => {
       if (!project.name) return;
@@ -1298,7 +1313,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       yPos = checkPageBreak(doc, yPos, 15);
       
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(FONT_FAMILY, 'bold');
       doc.setTextColor(COLORS.text);
       doc.text(project.name, MARGINS.left, yPos);
       yPos += 5;
@@ -1313,7 +1328,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       if (project.link) {
         doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(FONT_FAMILY, 'normal');
         doc.setTextColor('#2563eb');
         doc.text(project.link, MARGINS.left, yPos);
         yPos += 5;
@@ -1333,7 +1348,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left + 2, yPos);
             
             const parts = parseFormattedText(bulletText);
@@ -1346,11 +1361,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
@@ -1378,7 +1393,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left + 2, yPos);
               
               const parts = parseFormattedText(text);
@@ -1391,11 +1406,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 const words = part.text.split(' ');
@@ -1429,11 +1444,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
@@ -1469,7 +1484,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       if (!customSection.title || !customSection.items || customSection.items.length === 0) return;
       
       yPos = checkPageBreak(doc, yPos, 20);
-      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS);
+      yPos = addSectionHeader(doc, customSection.title, yPos, COLORS, FONT_FAMILY);
       
       customSection.items.forEach(item => {
         if (!item.content || !item.content.trim()) return;
@@ -1488,7 +1503,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
           // Check for bullet points
           if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
             const bulletText = trimmedLine.substring(1).trim();
-            doc.setFont('helvetica', 'normal');
+            doc.setFont(FONT_FAMILY, 'normal');
             doc.text('•', MARGINS.left, yPos);
             
             const parts = parseFormattedText(bulletText);
@@ -1501,11 +1516,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
@@ -1533,7 +1548,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               const number = match[1];
               const text = match[2];
               
-              doc.setFont('helvetica', 'normal');
+              doc.setFont(FONT_FAMILY, 'normal');
               doc.text(number, MARGINS.left, yPos);
               
               const parts = parseFormattedText(text);
@@ -1546,11 +1561,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
                 if (part.bold && part.italic) {
                   doc.setFont('helvetica', 'bolditalic');
                 } else if (part.bold) {
-                  doc.setFont('helvetica', 'bold');
+                  doc.setFont(FONT_FAMILY, 'bold');
                 } else if (part.italic) {
                   doc.setFont('helvetica', 'italic');
                 } else {
-                  doc.setFont('helvetica', 'normal');
+                  doc.setFont(FONT_FAMILY, 'normal');
                 }
                 
                 const words = part.text.split(' ');
@@ -1584,11 +1599,11 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
               if (part.bold && part.italic) {
                 doc.setFont('helvetica', 'bolditalic');
               } else if (part.bold) {
-                doc.setFont('helvetica', 'bold');
+                doc.setFont(FONT_FAMILY, 'bold');
               } else if (part.italic) {
                 doc.setFont('helvetica', 'italic');
               } else {
-                doc.setFont('helvetica', 'normal');
+                doc.setFont(FONT_FAMILY, 'normal');
               }
               
               const words = part.text.split(' ');
