@@ -69,6 +69,23 @@ function App() {
     }
   }, []);
 
+  // Check if user has filled any data
+  const hasFilledData = () => {
+    const { personalInfo, education, experience, skills, projects } = formData;
+    
+    // Check personal info
+    const hasPersonalInfo = personalInfo.fullName || personalInfo.email || 
+                           personalInfo.phone || personalInfo.summary;
+    
+    // Check if any section has data
+    const hasEducation = education.length > 0 && education.some(e => e.degree || e.institution);
+    const hasExperience = experience.length > 0 && experience.some(e => e.title || e.company);
+    const hasSkills = skills.length > 0 && skills.some(s => s.category || s.items);
+    const hasProjects = projects.length > 0 && projects.some(p => p.name);
+    
+    return hasPersonalInfo || hasEducation || hasExperience || hasSkills || hasProjects;
+  };
+
   const handlePersonalInfoChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -844,14 +861,7 @@ function App() {
           </section>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <button
-              onClick={handlePreview}
-              className="flex items-center justify-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-md"
-            >
-              <Eye className="w-5 h-5" />
-              Preview PDF
-            </button>
+          <div className="flex justify-center mt-8">
             <button
               onClick={handleDownload}
               className="flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold shadow-md"
@@ -865,7 +875,7 @@ function App() {
         {/* Footer */}
         <div className="text-center text-gray-600 text-sm">
           <p>Click "Fill Sample Data" for a quick demo, or fill in your details manually.</p>
-          <p className="mt-1">Use "Preview PDF" to see your resume or "Download PDF" to save it.</p>
+          <p className="mt-1">Use the floating preview button or "Download PDF" to get your resume.</p>
         </div>
       </div>
 
@@ -934,6 +944,18 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Preview Button - Shows when user has filled data */}
+      {resumeType && hasFilledData() && (
+        <button
+          onClick={handlePreview}
+          className="fixed bottom-6 right-6 flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all font-semibold shadow-2xl hover:shadow-blue-500/50 hover:scale-105 z-40 animate-slideUp animate-pulse-shadow"
+          title="Preview your resume"
+        >
+          <Eye className="w-5 h-5" />
+          <span className="hidden sm:inline">Preview PDF</span>
+        </button>
       )}
     </div>
   );
