@@ -7,10 +7,11 @@ function RealtimePreview({
   sectionOrder, 
   photo, 
   template,
-  onDownload 
+  onDownload,
+  isVisible = true,
+  onVisibilityChange 
 }) {
   const [pdfDataUrl, setPdfDataUrl] = useState('');
-  const [isVisible, setIsVisible] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const updateTimeoutRef = useRef(null);
@@ -50,20 +51,8 @@ function RealtimePreview({
     };
   }, [formData, sectionOrder, photo, template, isVisible]);
 
-  if (!isVisible) {
-    return (
-      <div className="fixed right-4 top-24 z-30">
-        <button
-          onClick={() => setIsVisible(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all"
-          title="Show preview"
-        >
-          <Eye className="w-5 h-5" />
-          <span className="text-sm font-semibold">Show Preview</span>
-        </button>
-      </div>
-    );
-  }
+  // Component is controlled by parent, no need for local show/hide button
+  // Parent controls visibility through conditional rendering
 
   return (
     <div 
@@ -111,7 +100,7 @@ function RealtimePreview({
           
           {/* Hide Button */}
           <button
-            onClick={() => setIsVisible(false)}
+            onClick={() => onVisibilityChange && onVisibilityChange(false)}
             className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             title="Hide preview"
           >
@@ -122,18 +111,26 @@ function RealtimePreview({
 
       {/* PDF Preview */}
       <div className="flex-1 bg-gray-100 overflow-auto rounded-b-lg">
-        {pdfDataUrl ? (
+        {isLoading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Generating preview...</p>
+            </div>
+          </div>
+        )}
+        
+        {!isLoading && pdfDataUrl && (
           <iframe
-            src={pdfDataUrl}
+            src={`${pdfDataUrl}#zoom=${isFullscreen ? '100' : '39'}`}
             className="w-full h-full border-0"
             title="Resume Preview"
           />
-        ) : (
+        )}
+        
+        {!isLoading && !pdfDataUrl && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-500">
-              <Eye className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Fill in your details to see preview</p>
-            </div>
+            <p className="text-gray-500">No preview available</p>
           </div>
         )}
       </div>

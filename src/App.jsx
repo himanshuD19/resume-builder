@@ -43,7 +43,7 @@ function App() {
 
   const [sectionOrder, setSectionOrder] = useState(['education', 'experience', 'skills', 'projects']);
   const [showCustomSectionModal, setShowCustomSectionModal] = useState(false);
-  const [showAnalyzer, setShowAnalyzer] = useState(true); // Toggle for analyzer sidebar
+  const [showAnalyzer, setShowAnalyzer] = useState(false); // Toggle for analyzer sidebar (hidden by default)
   const [customSectionInput, setCustomSectionInput] = useState('');
   const [draggedSection, setDraggedSection] = useState(null);
   const [draggedCustomSection, setDraggedCustomSection] = useState(null);
@@ -560,11 +560,11 @@ function App() {
         </div>
 
         {/* Main Content Grid - Form and Preview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Form (2/3 width) */}
-          <div className="lg:col-span-2">
+        <div className={`grid grid-cols-1 gap-6 ${showRealtimePreview ? 'lg:grid-cols-3' : ''}`}>
+          {/* Left Column - Form (dynamic width based on preview visibility) */}
+          <div className={showRealtimePreview ? 'lg:col-span-2' : ''}>
             {/* Form Container */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
               {/* Template Selector */}
               <TemplateSelector 
                 selectedTemplate={selectedTemplate}
@@ -891,24 +891,28 @@ function App() {
             </div>
           </div>
 
-          {/* Right Column - Real-time Preview (1/3 width) */}
-          <div className="lg:col-span-1">
-            {resumeType && hasFilledData() ? (
-              <RealtimePreview
-                formData={formData}
-                sectionOrder={sectionOrder}
-                photo={photo}
-                template={selectedTemplate}
-                onDownload={handleDownload}
-              />
-            ) : (
-              <div className="sticky top-4 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center">
-                <Eye className="w-16 h-16 mx-auto mb-4 text-indigo-300" />
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Live Preview</h3>
-                <p className="text-sm text-gray-500">Fill in your details to see a real-time preview of your resume</p>
-              </div>
-            )}
-          </div>
+          {/* Right Column - Real-time Preview (1/3 width) - Only show when enabled */}
+          {showRealtimePreview && (
+            <div className="lg:col-span-1">
+              {resumeType && hasFilledData() ? (
+                <RealtimePreview
+                  formData={formData}
+                  sectionOrder={sectionOrder}
+                  photo={photo}
+                  template={selectedTemplate}
+                  onDownload={handleDownload}
+                  isVisible={showRealtimePreview}
+                  onVisibilityChange={setShowRealtimePreview}
+                />
+              ) : (
+                <div className="sticky top-4 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center">
+                  <Eye className="w-16 h-16 mx-auto mb-4 text-indigo-300" />
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Live Preview</h3>
+                  <p className="text-sm text-gray-500">Fill in your details to see a real-time preview of your resume</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -1026,15 +1030,15 @@ function App() {
         </>
       )}
 
-      {/* Floating Preview Button - Shows when user has filled data */}
-      {resumeType && hasFilledData() && (
+      {/* Show Preview Button - Shows when preview is hidden and user has data */}
+      {resumeType && hasFilledData() && !showRealtimePreview && (
         <button
-          onClick={handlePreview}
+          onClick={() => setShowRealtimePreview(true)}
           className="fixed bottom-6 right-6 flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all font-semibold shadow-2xl hover:shadow-blue-500/50 hover:scale-105 z-40 animate-slideUp animate-pulse-shadow"
-          title="Preview your resume"
+          title="Show live preview"
         >
           <Eye className="w-5 h-5" />
-          <span className="hidden sm:inline">Preview PDF</span>
+          <span className="hidden sm:inline">Show Preview</span>
         </button>
       )}
     </div>

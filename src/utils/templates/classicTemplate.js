@@ -8,12 +8,32 @@ const PAGE_HEIGHT = 297;
 const MARGINS = { top: 25, bottom: 25, left: 25, right: 25 };
 const CONTENT_WIDTH = PAGE_WIDTH - MARGINS.left - MARGINS.right;
 
-const COLORS = {
-  primary: '#000000',
-  secondary: '#333333',
-  text: '#000000',
-  lightGray: '#666666'
-};
+// Get colors based on theme
+function getColors(theme = 'blue') {
+  const colorMap = {
+    blue: { r: 30, g: 64, b: 175 },
+    green: { r: 22, g: 163, b: 74 },
+    purple: { r: 147, g: 51, b: 234 },
+    red: { r: 220, g: 38, b: 38 },
+    teal: { r: 20, g: 184, b: 166 },
+    orange: { r: 234, g: 88, b: 12 },
+    pink: { r: 219, g: 39, b: 119 },
+    indigo: { r: 99, g: 102, b: 241 },
+    gray: { r: 75, g: 85, b: 99 },
+    cyan: { r: 6, g: 182, b: 212 },
+    navy: { r: 30, g: 58, b: 138 },
+    emerald: { r: 16, g: 185, b: 129 }
+  };
+
+  const color = colorMap[theme] || colorMap.blue;
+  
+  return {
+    primary: color,
+    secondary: { r: 51, g: 51, b: 51 },
+    text: { r: 0, g: 0, b: 0 },
+    lightGray: { r: 102, g: 102, b: 102 }
+  };
+}
 
 // Helper function to check page break
 function checkPageBreak(doc, yPos, requiredSpace) {
@@ -30,13 +50,14 @@ function wrapText(doc, text, maxWidth) {
 }
 
 // Helper function for section headers
-function addSectionHeader(doc, text, yPos, fontFamily = 'times') {
+function addSectionHeader(doc, text, yPos, colors, fontFamily = 'times') {
   doc.setFontSize(12);
   doc.setFont(fontFamily, 'bold');
-  doc.setTextColor(COLORS.primary);
+  doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
   doc.text(text.toUpperCase(), MARGINS.left, yPos);
   
   // Underline
+  doc.setDrawColor(colors.primary.r, colors.primary.g, colors.primary.b);
   doc.setLineWidth(0.5);
   doc.line(MARGINS.left, yPos + 1, PAGE_WIDTH - MARGINS.right, yPos + 1);
   
@@ -46,19 +67,20 @@ function addSectionHeader(doc, text, yPos, fontFamily = 'times') {
 export function generateClassicPDF(formData, photo = null) {
   const doc = new jsPDF();
   const FONT_FAMILY = formData.fontStyle || 'times';
+  const COLORS = getColors(formData.colorTheme || 'blue');
   let yPos = MARGINS.top;
 
   // Header - Name (Centered, Large)
   doc.setFontSize(20);
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setTextColor(COLORS.primary);
+  doc.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
   doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
   yPos += 8;
 
   // Contact Info (Centered, Small)
   doc.setFontSize(10);
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setTextColor(COLORS.secondary);
+  doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
   
   const contactInfo = [];
   if (formData.personalInfo.email) contactInfo.push(formData.personalInfo.email);
@@ -84,11 +106,11 @@ export function generateClassicPDF(formData, photo = null) {
   // Professional Summary
   if (formData.personalInfo.summary && formData.personalInfo.summary.trim()) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Professional Summary', yPos, FONT_FAMILY);
+    yPos = addSectionHeader(doc, 'Professional Summary', yPos, COLORS, FONT_FAMILY);
     
     doc.setFontSize(10);
     doc.setFont(FONT_FAMILY, 'normal');
-    doc.setTextColor(COLORS.text);
+    doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
     
     const summaryLines = wrapText(doc, formData.personalInfo.summary, CONTENT_WIDTH);
     summaryLines.forEach(line => {
@@ -103,7 +125,7 @@ export function generateClassicPDF(formData, photo = null) {
   const hasEducation = formData.education.some(edu => edu.degree || edu.institution);
   if (hasEducation) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Education', yPos, FONT_FAMILY);
+    yPos = addSectionHeader(doc, 'Education', yPos, COLORS, FONT_FAMILY);
     
     formData.education.forEach(edu => {
       if (!edu.degree && !edu.institution) return;
@@ -112,7 +134,7 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
       
       if (edu.startDate || edu.endDate) {
@@ -124,7 +146,7 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'italic');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let institutionLine = edu.institution || '';
       if (edu.location) institutionLine += `, ${edu.location}`;
@@ -146,7 +168,7 @@ export function generateClassicPDF(formData, photo = null) {
   const hasExperience = formData.experience.some(exp => exp.title || exp.company);
   if (hasExperience) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Professional Experience', yPos, FONT_FAMILY);
+    yPos = addSectionHeader(doc, 'Professional Experience', yPos, COLORS, FONT_FAMILY);
     
     formData.experience.forEach(exp => {
       if (!exp.title && !exp.company) return;
@@ -155,7 +177,7 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(exp.title || 'Position', MARGINS.left, yPos);
       
       if (exp.startDate || exp.endDate) {
@@ -167,7 +189,7 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'italic');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let companyLine = exp.company || '';
       if (exp.location) companyLine += `, ${exp.location}`;
@@ -177,7 +199,7 @@ export function generateClassicPDF(formData, photo = null) {
       if (exp.description && exp.description.trim()) {
         doc.setFontSize(10);
         doc.setFont(FONT_FAMILY, 'normal');
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = exp.description.split('\n').filter(line => line.trim());
         descLines.forEach(line => {
@@ -218,7 +240,7 @@ export function generateClassicPDF(formData, photo = null) {
   const hasSkills = formData.skills.some(skill => skill.category || skill.items);
   if (hasSkills) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Skills', yPos, FONT_FAMILY);
+    yPos = addSectionHeader(doc, 'Skills', yPos, COLORS, FONT_FAMILY);
     
     formData.skills.forEach(skill => {
       if (!skill.category && !skill.items) return;
@@ -227,16 +249,15 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       
       if (skill.category) {
         doc.text(skill.category + ':', MARGINS.left, yPos);
-        yPos += 5;
       }
       
       if (skill.items) {
         doc.setFont(FONT_FAMILY, 'normal');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
         skillLines.forEach(line => {
           yPos = checkPageBreak(doc, yPos, 5);
@@ -254,7 +275,7 @@ export function generateClassicPDF(formData, photo = null) {
   const hasProjects = formData.projects.some(project => project.name);
   if (hasProjects) {
     yPos = checkPageBreak(doc, yPos, 20);
-    yPos = addSectionHeader(doc, 'Projects', yPos, FONT_FAMILY);
+    yPos = addSectionHeader(doc, 'Projects', yPos, COLORS, FONT_FAMILY);
     
     formData.projects.forEach(project => {
       if (!project.name) return;
@@ -263,14 +284,14 @@ export function generateClassicPDF(formData, photo = null) {
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(project.name, MARGINS.left, yPos);
       yPos += 5;
       
       if (project.technologies) {
         doc.setFontSize(9);
         doc.setFont(FONT_FAMILY, 'italic');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         doc.text(`Technologies: ${project.technologies}`, MARGINS.left, yPos);
         yPos += 5;
       }
@@ -278,7 +299,7 @@ export function generateClassicPDF(formData, photo = null) {
       if (project.description && project.description.trim()) {
         doc.setFontSize(10);
         doc.setFont(FONT_FAMILY, 'normal');
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = wrapText(doc, project.description, CONTENT_WIDTH - 2);
         descLines.forEach(line => {
