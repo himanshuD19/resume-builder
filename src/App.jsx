@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Trash2, Eye, Download, Sparkles, Palette, GripVertical, Upload, X, BarChart3 } from 'lucide-react';
 import { generatePDF, previewPDF } from './utils/pdfGenerator';
+import { downloadPDFByTemplate } from './utils/templateManager';
 import RichTextEditor from './components/RichTextEditor';
 import SectionRenderer from './components/SectionRenderer';
 import LandingPage from './components/LandingPage';
 import AdminPanel from './components/AdminPanel';
 import AdminLogin from './components/AdminLogin';
 import EditResume from './components/EditResume';
+import TemplateSelector from './components/TemplateSelector';
+import RealtimePreview from './components/RealtimePreview';
+import ResumeAnalyzer from './components/ResumeAnalyzer';
 import { trackDownload, trackPreview } from './utils/analytics';
 import { saveToLocalStorage } from './utils/pdfParser';
 
@@ -15,6 +19,8 @@ function App() {
   const [photo, setPhoto] = useState(null); // Base64 encoded photo
   const [isAdminRoute, setIsAdminRoute] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('modern'); // Template selection
+  const [showRealtimePreview, setShowRealtimePreview] = useState(false); // Real-time preview toggle
   
   const [formData, setFormData] = useState({
     personalInfo: {
@@ -36,8 +42,8 @@ function App() {
   });
 
   const [sectionOrder, setSectionOrder] = useState(['education', 'experience', 'skills', 'projects']);
-  const [showPreview, setShowPreview] = useState(false);
   const [showCustomSectionModal, setShowCustomSectionModal] = useState(false);
+  const [showAnalyzer, setShowAnalyzer] = useState(true); // Toggle for analyzer sidebar
   const [customSectionInput, setCustomSectionInput] = useState('');
   const [draggedSection, setDraggedSection] = useState(null);
   const [draggedCustomSection, setDraggedCustomSection] = useState(null);
@@ -400,13 +406,13 @@ function App() {
   };
 
   const handlePreview = () => {
-    previewPDF(formData, sectionOrder, photo);
-    setShowPreview(true);
+    // Preview is now always visible in real-time preview component
+    // This function just tracks the preview action
     trackPreview(resumeType, formData.colorTheme);
   };
 
   const handleDownload = () => {
-    generatePDF(formData, sectionOrder, photo);
+    downloadPDFByTemplate(selectedTemplate, formData, sectionOrder, photo);
     trackDownload(resumeType, formData.colorTheme);
   };
 
@@ -553,10 +559,20 @@ function App() {
           </div>
         </div>
 
-        {/* Form Container */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          {/* Color Theme Selector */}
-          <section className="mb-8 pb-6 border-b-2 border-gray-200">
+        {/* Main Content Grid - Form and Preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Form (2/3 width) */}
+          <div className="lg:col-span-2">
+            {/* Form Container */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              {/* Template Selector */}
+              <TemplateSelector 
+                selectedTemplate={selectedTemplate}
+                onTemplateChange={setSelectedTemplate}
+              />
+
+              {/* Color Theme Selector */}
+              <section className="mb-8 pb-6 border-b-2 border-gray-200">
             <div className="flex items-center gap-2 mb-4">
               <Palette className="w-6 h-6 text-indigo-600" />
               <h2 className="text-2xl font-semibold text-gray-800">PDF Color Theme</h2>
@@ -861,21 +877,44 @@ function App() {
           </section>
 
           {/* Action Buttons */}
-          <div className="flex justify-center mt-8">
-            <button
-              onClick={handleDownload}
-              className="flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold shadow-md"
-            >
-              <Download className="w-5 h-5" />
-              Download PDF
-            </button>
+          {hasFilledData() && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleDownload}
+                className="flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold shadow-md"
+              >
+                <Download className="w-5 h-5" />
+                Download PDF
+              </button>
+            </div>
+          )}
+            </div>
+          </div>
+
+          {/* Right Column - Real-time Preview (1/3 width) */}
+          <div className="lg:col-span-1">
+            {resumeType && hasFilledData() ? (
+              <RealtimePreview
+                formData={formData}
+                sectionOrder={sectionOrder}
+                photo={photo}
+                template={selectedTemplate}
+                onDownload={handleDownload}
+              />
+            ) : (
+              <div className="sticky top-4 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center">
+                <Eye className="w-16 h-16 mx-auto mb-4 text-indigo-300" />
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Live Preview</h3>
+                <p className="text-sm text-gray-500">Fill in your details to see a real-time preview of your resume</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center text-gray-600 text-sm">
+        <div className="text-center text-gray-600 text-sm mt-6">
           <p>Click "Fill Sample Data" for a quick demo, or fill in your details manually.</p>
-          <p className="mt-1">Use the floating preview button or "Download PDF" to get your resume.</p>
+          <p className="mt-1">{hasFilledData() ? 'Use the real-time preview or "Download PDF" to get your resume.' : 'Fill in your details to see preview and download options.'}</p>
         </div>
       </div>
 
@@ -944,6 +983,47 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Resume Analyzer - Full Width Bottom Panel */}
+      {resumeType && hasFilledData() && (
+        <>
+          {/* Toggle Button - Fixed at bottom */}
+          <button
+            onClick={() => setShowAnalyzer(!showAnalyzer)}
+            className={`fixed bottom-24 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-2xl hover:from-purple-700 hover:to-indigo-700 transition-all hover:scale-105 ${
+              showAnalyzer ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+            title="Show Resume Score"
+          >
+            <BarChart3 className="w-5 h-5" />
+            <span className="text-sm font-semibold">Resume Score</span>
+          </button>
+
+          {/* Analyzer Bottom Panel - Full Width */}
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t-4 border-purple-600 shadow-2xl transition-all duration-300 ${
+              showAnalyzer ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+            }`}
+            style={{ maxHeight: '60vh' }}
+          >
+            <div className="relative max-w-7xl mx-auto">
+              {/* Close Button */}
+              <button
+                onClick={() => setShowAnalyzer(false)}
+                className="absolute top-4 right-4 z-10 w-10 h-10 bg-gray-100 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 transition-colors border-2 border-gray-300"
+                title="Close"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+              
+              {/* Analyzer Component */}
+              <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+                <ResumeAnalyzer formData={formData} />
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Floating Preview Button - Shows when user has filled data */}

@@ -912,12 +912,8 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
     });
   }
 
-  // Save the PDF
-  const fileName = formData.personalInfo.fullName 
-    ? `${formData.personalInfo.fullName.replace(/\s+/g, '_')}_Resume.pdf`
-    : 'Resume.pdf';
-  
-  doc.save(fileName);
+  // Return the document (don't save - let the caller decide)
+  return doc;
 }
 
 export function previewPDF(formData, sectionOrder = ['education', 'experience', 'skills', 'projects'], photo = null) {
@@ -1635,6 +1631,6 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
     });
   }
 
-  // Open in new window for preview
-  window.open(doc.output('bloburl'), '_blank');
+  // Return the document object for preview (don't open new window)
+  return doc;
 }

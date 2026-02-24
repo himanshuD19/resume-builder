@@ -1,0 +1,301 @@
+import jsPDF from 'jspdf';
+
+// Classic Template - Traditional, Conservative Design
+// Perfect for corporate, finance, legal, government positions
+
+const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
+const MARGINS = { top: 25, bottom: 25, left: 25, right: 25 };
+const CONTENT_WIDTH = PAGE_WIDTH - MARGINS.left - MARGINS.right;
+
+const COLORS = {
+  primary: '#000000',
+  secondary: '#333333',
+  text: '#000000',
+  lightGray: '#666666'
+};
+
+// Helper function to check page break
+function checkPageBreak(doc, yPos, requiredSpace) {
+  if (yPos + requiredSpace > PAGE_HEIGHT - MARGINS.bottom) {
+    doc.addPage();
+    return MARGINS.top;
+  }
+  return yPos;
+}
+
+// Helper function to wrap text
+function wrapText(doc, text, maxWidth) {
+  return doc.splitTextToSize(text, maxWidth);
+}
+
+// Helper function for section headers
+function addSectionHeader(doc, text, yPos, fontFamily = 'times') {
+  doc.setFontSize(12);
+  doc.setFont(fontFamily, 'bold');
+  doc.setTextColor(COLORS.primary);
+  doc.text(text.toUpperCase(), MARGINS.left, yPos);
+  
+  // Underline
+  doc.setLineWidth(0.5);
+  doc.line(MARGINS.left, yPos + 1, PAGE_WIDTH - MARGINS.right, yPos + 1);
+  
+  return yPos + 8;
+}
+
+export function generateClassicPDF(formData, photo = null) {
+  const doc = new jsPDF();
+  const FONT_FAMILY = formData.fontStyle || 'times';
+  let yPos = MARGINS.top;
+
+  // Header - Name (Centered, Large)
+  doc.setFontSize(20);
+  doc.setFont(FONT_FAMILY, 'bold');
+  doc.setTextColor(COLORS.primary);
+  doc.text(formData.personalInfo.fullName || 'Your Name', PAGE_WIDTH / 2, yPos, { align: 'center' });
+  yPos += 8;
+
+  // Contact Info (Centered, Small)
+  doc.setFontSize(10);
+  doc.setFont(FONT_FAMILY, 'normal');
+  doc.setTextColor(COLORS.secondary);
+  
+  const contactInfo = [];
+  if (formData.personalInfo.email) contactInfo.push(formData.personalInfo.email);
+  if (formData.personalInfo.phone) contactInfo.push(formData.personalInfo.phone);
+  if (formData.personalInfo.address) contactInfo.push(formData.personalInfo.address);
+  
+  if (contactInfo.length > 0) {
+    doc.text(contactInfo.join(' • '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+    yPos += 5;
+  }
+
+  const links = [];
+  if (formData.personalInfo.linkedin) links.push(formData.personalInfo.linkedin);
+  if (formData.personalInfo.portfolio) links.push(formData.personalInfo.portfolio);
+  
+  if (links.length > 0) {
+    doc.text(links.join(' • '), PAGE_WIDTH / 2, yPos, { align: 'center' });
+    yPos += 5;
+  }
+
+  yPos += 5;
+
+  // Professional Summary
+  if (formData.personalInfo.summary && formData.personalInfo.summary.trim()) {
+    yPos = checkPageBreak(doc, yPos, 20);
+    yPos = addSectionHeader(doc, 'Professional Summary', yPos, FONT_FAMILY);
+    
+    doc.setFontSize(10);
+    doc.setFont(FONT_FAMILY, 'normal');
+    doc.setTextColor(COLORS.text);
+    
+    const summaryLines = wrapText(doc, formData.personalInfo.summary, CONTENT_WIDTH);
+    summaryLines.forEach(line => {
+      yPos = checkPageBreak(doc, yPos, 5);
+      doc.text(line, MARGINS.left, yPos);
+      yPos += 5;
+    });
+    yPos += 5;
+  }
+
+  // Education
+  const hasEducation = formData.education.some(edu => edu.degree || edu.institution);
+  if (hasEducation) {
+    yPos = checkPageBreak(doc, yPos, 20);
+    yPos = addSectionHeader(doc, 'Education', yPos, FONT_FAMILY);
+    
+    formData.education.forEach(edu => {
+      if (!edu.degree && !edu.institution) return;
+      
+      yPos = checkPageBreak(doc, yPos, 15);
+      
+      doc.setFontSize(11);
+      doc.setFont(FONT_FAMILY, 'bold');
+      doc.setTextColor(COLORS.text);
+      doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
+      
+      if (edu.startDate || edu.endDate) {
+        const dateText = `${edu.startDate || ''} - ${edu.endDate || ''}`;
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.text(dateText, PAGE_WIDTH - MARGINS.right, yPos, { align: 'right' });
+      }
+      yPos += 5;
+      
+      doc.setFontSize(10);
+      doc.setFont(FONT_FAMILY, 'italic');
+      doc.setTextColor(COLORS.secondary);
+      
+      let institutionLine = edu.institution || '';
+      if (edu.location) institutionLine += `, ${edu.location}`;
+      doc.text(institutionLine, MARGINS.left, yPos);
+      yPos += 5;
+      
+      if (edu.gpa) {
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.text(`GPA: ${edu.gpa}`, MARGINS.left, yPos);
+        yPos += 5;
+      }
+      
+      yPos += 3;
+    });
+    yPos += 3;
+  }
+
+  // Work Experience
+  const hasExperience = formData.experience.some(exp => exp.title || exp.company);
+  if (hasExperience) {
+    yPos = checkPageBreak(doc, yPos, 20);
+    yPos = addSectionHeader(doc, 'Professional Experience', yPos, FONT_FAMILY);
+    
+    formData.experience.forEach(exp => {
+      if (!exp.title && !exp.company) return;
+      
+      yPos = checkPageBreak(doc, yPos, 15);
+      
+      doc.setFontSize(11);
+      doc.setFont(FONT_FAMILY, 'bold');
+      doc.setTextColor(COLORS.text);
+      doc.text(exp.title || 'Position', MARGINS.left, yPos);
+      
+      if (exp.startDate || exp.endDate) {
+        const dateText = `${exp.startDate || ''} - ${exp.endDate || ''}`;
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.text(dateText, PAGE_WIDTH - MARGINS.right, yPos, { align: 'right' });
+      }
+      yPos += 5;
+      
+      doc.setFontSize(10);
+      doc.setFont(FONT_FAMILY, 'italic');
+      doc.setTextColor(COLORS.secondary);
+      
+      let companyLine = exp.company || '';
+      if (exp.location) companyLine += `, ${exp.location}`;
+      doc.text(companyLine, MARGINS.left, yPos);
+      yPos += 6;
+      
+      if (exp.description && exp.description.trim()) {
+        doc.setFontSize(10);
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.setTextColor(COLORS.text);
+        
+        const descLines = exp.description.split('\n').filter(line => line.trim());
+        descLines.forEach(line => {
+          yPos = checkPageBreak(doc, yPos, 5);
+          const trimmedLine = line.trim();
+          
+          if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+            const bulletText = trimmedLine.substring(1).trim();
+            doc.text('•', MARGINS.left + 2, yPos);
+            const wrappedText = wrapText(doc, bulletText, CONTENT_WIDTH - 7);
+            wrappedText.forEach((textLine, idx) => {
+              if (idx > 0) {
+                yPos += 4;
+                yPos = checkPageBreak(doc, yPos, 5);
+              }
+              doc.text(textLine, MARGINS.left + 7, yPos);
+            });
+          } else {
+            const wrappedText = wrapText(doc, trimmedLine, CONTENT_WIDTH - 2);
+            wrappedText.forEach((textLine, idx) => {
+              if (idx > 0) {
+                yPos += 4;
+                yPos = checkPageBreak(doc, yPos, 5);
+              }
+              doc.text(textLine, MARGINS.left + 2, yPos);
+            });
+          }
+          yPos += 4;
+        });
+      }
+      
+      yPos += 3;
+    });
+    yPos += 3;
+  }
+
+  // Skills
+  const hasSkills = formData.skills.some(skill => skill.category || skill.items);
+  if (hasSkills) {
+    yPos = checkPageBreak(doc, yPos, 20);
+    yPos = addSectionHeader(doc, 'Skills', yPos, FONT_FAMILY);
+    
+    formData.skills.forEach(skill => {
+      if (!skill.category && !skill.items) return;
+      
+      yPos = checkPageBreak(doc, yPos, 10);
+      
+      doc.setFontSize(10);
+      doc.setFont(FONT_FAMILY, 'bold');
+      doc.setTextColor(COLORS.text);
+      
+      if (skill.category) {
+        doc.text(skill.category + ':', MARGINS.left, yPos);
+        yPos += 5;
+      }
+      
+      if (skill.items) {
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.setTextColor(COLORS.secondary);
+        const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
+        skillLines.forEach(line => {
+          yPos = checkPageBreak(doc, yPos, 5);
+          doc.text(line, MARGINS.left + 2, yPos);
+          yPos += 4;
+        });
+      }
+      
+      yPos += 2;
+    });
+    yPos += 3;
+  }
+
+  // Projects
+  const hasProjects = formData.projects.some(project => project.name);
+  if (hasProjects) {
+    yPos = checkPageBreak(doc, yPos, 20);
+    yPos = addSectionHeader(doc, 'Projects', yPos, FONT_FAMILY);
+    
+    formData.projects.forEach(project => {
+      if (!project.name) return;
+      
+      yPos = checkPageBreak(doc, yPos, 15);
+      
+      doc.setFontSize(11);
+      doc.setFont(FONT_FAMILY, 'bold');
+      doc.setTextColor(COLORS.text);
+      doc.text(project.name, MARGINS.left, yPos);
+      yPos += 5;
+      
+      if (project.technologies) {
+        doc.setFontSize(9);
+        doc.setFont(FONT_FAMILY, 'italic');
+        doc.setTextColor(COLORS.secondary);
+        doc.text(`Technologies: ${project.technologies}`, MARGINS.left, yPos);
+        yPos += 5;
+      }
+      
+      if (project.description && project.description.trim()) {
+        doc.setFontSize(10);
+        doc.setFont(FONT_FAMILY, 'normal');
+        doc.setTextColor(COLORS.text);
+        
+        const descLines = wrapText(doc, project.description, CONTENT_WIDTH - 2);
+        descLines.forEach(line => {
+          yPos = checkPageBreak(doc, yPos, 5);
+          doc.text(line, MARGINS.left + 2, yPos);
+          yPos += 4;
+        });
+      }
+      
+      yPos += 3;
+    });
+  }
+
+  return doc;
+}
+
+export function previewClassicPDF(formData, photo = null) {
+  const doc = generateClassicPDF(formData, photo);
+  return doc.output('dataurlstring');
+}
