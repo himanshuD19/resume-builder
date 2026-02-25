@@ -64,6 +64,23 @@ export function generateATSPDF(formData, photo = null) {
   const COLORS = getColors(formData.colorTheme || 'blue');
   let yPos = MARGINS.top;
 
+  // Add photo if provided (Note: Photos not recommended for ATS, but adding support)
+  if (photo) {
+    const photoSize = 25; // 25mm square for ATS template (smaller, less intrusive)
+    const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
+    const photoY = MARGINS.top;
+    
+    try {
+      doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
+      // Simple border
+      doc.setDrawColor(0, 0, 0); // Black border for ATS
+      doc.setLineWidth(0.3);
+      doc.rect(photoX, photoY, photoSize, photoSize);
+    } catch (error) {
+      console.error('Error adding photo to ATS PDF:', error);
+    }
+  }
+
   // Header - Name (Left-aligned, Simple)
   doc.setFontSize(16);
   doc.setFont(FONT_FAMILY, 'bold');

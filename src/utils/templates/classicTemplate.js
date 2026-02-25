@@ -70,6 +70,23 @@ export function generateClassicPDF(formData, photo = null) {
   const COLORS = getColors(formData.colorTheme || 'blue');
   let yPos = MARGINS.top;
 
+  // Add photo if provided (top-right corner)
+  if (photo) {
+    const photoSize = 30; // 30mm square for classic template
+    const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
+    const photoY = 15; // Higher position (was MARGINS.top = 25)
+    
+    try {
+      doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
+      // Add border around photo
+      doc.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
+      doc.setLineWidth(0.5);
+      doc.rect(photoX, photoY, photoSize, photoSize);
+    } catch (error) {
+      console.error('Error adding photo to Classic PDF:', error);
+    }
+  }
+
   // Header - Name (Centered, Large)
   doc.setFontSize(20);
   doc.setFont(FONT_FAMILY, 'bold');
@@ -258,12 +275,31 @@ export function generateClassicPDF(formData, photo = null) {
       if (skill.items) {
         doc.setFont(FONT_FAMILY, 'normal');
         doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
-        const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
-        skillLines.forEach(line => {
-          yPos = checkPageBreak(doc, yPos, 5);
-          doc.text(line, MARGINS.left + 2, yPos);
-          yPos += 4;
-        });
+        
+        // If category exists, put items on same line, otherwise start new line
+        if (skill.category) {
+          const categoryWidth = doc.getTextWidth(skill.category + ': ');
+          const itemsWidth = CONTENT_WIDTH - categoryWidth - 2;
+          const skillLines = wrapText(doc, skill.items, itemsWidth);
+          
+          // First line on same line as category
+          doc.text(skillLines[0], MARGINS.left + categoryWidth + 2, yPos);
+          yPos += 5;
+          
+          // Remaining lines indented
+          for (let i = 1; i < skillLines.length; i++) {
+            yPos = checkPageBreak(doc, yPos, 5);
+            doc.text(skillLines[i], MARGINS.left + 2, yPos);
+            yPos += 5;
+          }
+        } else {
+          const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
+          skillLines.forEach(line => {
+            yPos = checkPageBreak(doc, yPos, 5);
+            doc.text(line, MARGINS.left + 2, yPos);
+            yPos += 5;
+          });
+        }
       }
       
       yPos += 2;

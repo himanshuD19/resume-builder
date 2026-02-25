@@ -1,26 +1,26 @@
 import jsPDF from 'jspdf';
 
-// Color theme mapping
+// Color theme mapping - RGB values for jsPDF
 const COLOR_THEMES = {
-  blue: '#1e40af',
-  indigo: '#4338ca',
-  purple: '#7c3aed',
-  green: '#059669',
-  teal: '#0d9488',
-  red: '#dc2626',
-  orange: '#ea580c',
-  pink: '#db2777',
-  slate: '#475569',
-  gray: '#4b5563',
-  cyan: '#0891b2',
-  navy: '#1e3a8a'
+  blue: { r: 30, g: 64, b: 175 },
+  indigo: { r: 67, g: 56, b: 202 },
+  purple: { r: 124, g: 58, b: 237 },
+  green: { r: 5, g: 150, b: 105 },
+  teal: { r: 13, g: 148, b: 136 },
+  red: { r: 220, g: 38, b: 38 },
+  orange: { r: 234, g: 88, b: 12 },
+  pink: { r: 219, g: 39, b: 119 },
+  slate: { r: 71, g: 85, b: 105 },
+  gray: { r: 75, g: 85, b: 99 },
+  cyan: { r: 8, g: 145, b: 178 },
+  navy: { r: 30, g: 58, b: 138 }
 };
 
 const getColors = (theme = 'blue') => ({
   primary: COLOR_THEMES[theme] || COLOR_THEMES.blue,
-  secondary: '#64748b',
-  text: '#1f2937',
-  lightGray: '#f3f4f6'
+  secondary: { r: 100, g: 116, b: 139 },
+  text: { r: 31, g: 41, b: 55 },
+  lightGray: { r: 243, g: 244, b: 246 }
 });
 
 const MARGINS = {
@@ -57,11 +57,11 @@ function wrapText(doc, text, maxWidth) {
 function addSectionHeader(doc, text, yPos, COLORS, fontFamily = 'helvetica') {
   doc.setFontSize(14);
   doc.setFont(fontFamily, 'bold');
-  doc.setTextColor(COLORS.primary);
+  doc.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
   doc.text(text.toUpperCase(), MARGINS.left, yPos);
   
   // Add underline
-  doc.setDrawColor(COLORS.primary);
+  doc.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
   doc.setLineWidth(0.5);
   doc.line(MARGINS.left, yPos + 1, PAGE_WIDTH - MARGINS.right, yPos + 1);
   
@@ -187,13 +187,13 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   if (photo) {
     const photoSize = 35; // 35mm square
     const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
-    const photoY = MARGINS.top;
+    const photoY = 15; // Higher position (was MARGINS.top = 20)
     photoHeight = photoSize + 5; // Track photo height for text positioning
     
     try {
       doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
       // Add border around photo
-      doc.setDrawColor(COLORS.primary);
+      doc.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
       doc.setLineWidth(0.8);
       doc.rect(photoX, photoY, photoSize, photoSize);
     } catch (error) {
@@ -204,7 +204,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   // Header - Name and Contact Info
   doc.setFontSize(24);
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setTextColor(COLORS.primary);
+  doc.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
   
   // If photo exists, align name to the left, otherwise center
   if (photo) {
@@ -217,7 +217,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
   // Contact Information
   doc.setFontSize(9);
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setTextColor(COLORS.secondary);
+  doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
   
   const contactInfo = [];
   if (formData.personalInfo.email) contactInfo.push(formData.personalInfo.email);
@@ -273,7 +273,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
     
     doc.setFontSize(10);
     doc.setFont(FONT_FAMILY, 'normal');
-    doc.setTextColor(COLORS.text);
+    doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
     
     // Use reduced width if photo exists and we're still in photo area
     const summaryWidth = (photo && yPos < photoHeight + MARGINS.top + 10) 
@@ -306,13 +306,13 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Degree and Institution
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'normal');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let institutionLine = edu.institution || '';
       if (edu.location) institutionLine += ` - ${edu.location}`;
@@ -354,14 +354,14 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Job Title
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(exp.title || 'Position', MARGINS.left, yPos);
       yPos += 5;
       
       // Company and Location
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'normal');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let companyLine = exp.company || '';
       if (exp.location) companyLine += ` - ${exp.location}`;
@@ -377,7 +377,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Description with formatting support
       if (exp.description && exp.description.trim()) {
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = exp.description.split('\n').filter(line => line.trim());
         descLines.forEach(line => {
@@ -541,7 +541,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       
       if (skill.category) {
         doc.text(skill.category + ':', MARGINS.left, yPos);
@@ -550,7 +550,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       
       if (skill.items) {
         doc.setFont(FONT_FAMILY, 'normal');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
         skillLines.forEach(line => {
           yPos = checkPageBreak(doc, yPos, 5);
@@ -581,7 +581,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Project Name
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(project.name, MARGINS.left, yPos);
       yPos += 5;
       
@@ -589,7 +589,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       if (project.technologies) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         doc.text(`Technologies: ${project.technologies}`, MARGINS.left, yPos);
         yPos += 5;
       }
@@ -606,7 +606,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
       // Description with formatting support
       if (project.description && project.description.trim()) {
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = project.description.split('\n').filter(line => line.trim());
         descLines.forEach(line => {
@@ -769,7 +769,7 @@ export function generatePDF(formData, sectionOrder = ['education', 'experience',
         yPos = checkPageBreak(doc, yPos, 10);
         
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const contentLines = item.content.split('\n').filter(line => line.trim());
         contentLines.forEach(line => {
@@ -927,12 +927,12 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   if (photo) {
     const photoSize = 35;
     const photoX = PAGE_WIDTH - MARGINS.right - photoSize;
-    const photoY = MARGINS.top;
+    const photoY = 15; // Higher position (was MARGINS.top = 20)
     photoHeight = photoSize + 5;
     
     try {
       doc.addImage(photo, 'JPEG', photoX, photoY, photoSize, photoSize);
-      doc.setDrawColor(COLORS.primary);
+      doc.setDrawColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
       doc.setLineWidth(0.8);
       doc.rect(photoX, photoY, photoSize, photoSize);
     } catch (error) {
@@ -944,7 +944,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   // Header - Name and Contact Info
   doc.setFontSize(24);
   doc.setFont(FONT_FAMILY, 'bold');
-  doc.setTextColor(COLORS.primary);
+  doc.setTextColor(COLORS.primary.r, COLORS.primary.g, COLORS.primary.b);
   
   if (photo) {
     doc.text(formData.personalInfo.fullName || 'Your Name', MARGINS.left, yPos);
@@ -956,7 +956,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
   // Contact Information
   doc.setFontSize(9);
   doc.setFont(FONT_FAMILY, 'normal');
-  doc.setTextColor(COLORS.secondary);
+  doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
   
   const contactInfo = [];
   if (formData.personalInfo.email) contactInfo.push(formData.personalInfo.email);
@@ -1010,7 +1010,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
     
     doc.setFontSize(10);
     doc.setFont(FONT_FAMILY, 'normal');
-    doc.setTextColor(COLORS.text);
+    doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
     
     const summaryWidth = (photo && yPos < photoHeight + MARGINS.top + 10) 
       ? PAGE_WIDTH - MARGINS.right - 45 - MARGINS.left 
@@ -1041,13 +1041,13 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(edu.degree || 'Degree', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'normal');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let institutionLine = edu.institution || '';
       if (edu.location) institutionLine += ` - ${edu.location}`;
@@ -1086,13 +1086,13 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(exp.title || 'Position', MARGINS.left, yPos);
       yPos += 5;
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'normal');
-      doc.setTextColor(COLORS.secondary);
+      doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
       
       let companyLine = exp.company || '';
       if (exp.location) companyLine += ` - ${exp.location}`;
@@ -1107,7 +1107,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       // Description with formatting support
       if (exp.description && exp.description.trim()) {
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = exp.description.split('\n').filter(line => line.trim());
         descLines.forEach(line => {
@@ -1271,7 +1271,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       doc.setFontSize(10);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       
       if (skill.category) {
         doc.text(skill.category + ':', MARGINS.left, yPos);
@@ -1280,7 +1280,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       if (skill.items) {
         doc.setFont(FONT_FAMILY, 'normal');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         const skillLines = wrapText(doc, skill.items, CONTENT_WIDTH - 2);
         skillLines.forEach(line => {
           yPos = checkPageBreak(doc, yPos, 5);
@@ -1310,14 +1310,14 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       
       doc.setFontSize(11);
       doc.setFont(FONT_FAMILY, 'bold');
-      doc.setTextColor(COLORS.text);
+      doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
       doc.text(project.name, MARGINS.left, yPos);
       yPos += 5;
       
       if (project.technologies) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(COLORS.secondary);
+        doc.setTextColor(COLORS.secondary.r, COLORS.secondary.g, COLORS.secondary.b);
         doc.text(`Technologies: ${project.technologies}`, MARGINS.left, yPos);
         yPos += 5;
       }
@@ -1333,7 +1333,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
       // Description with formatting support
       if (project.description && project.description.trim()) {
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const descLines = project.description.split('\n').filter(line => line.trim());
         descLines.forEach(line => {
@@ -1488,7 +1488,7 @@ export function previewPDF(formData, sectionOrder = ['education', 'experience', 
         yPos = checkPageBreak(doc, yPos, 10);
         
         doc.setFontSize(9);
-        doc.setTextColor(COLORS.text);
+        doc.setTextColor(COLORS.text.r, COLORS.text.g, COLORS.text.b);
         
         const contentLines = item.content.split('\n').filter(line => line.trim());
         contentLines.forEach(line => {
