@@ -11,98 +11,126 @@ const UserManual = ({ onClose }) => {
     {
       icon: FileText,
       title: 'Welcome to Resume Builder! 🎉',
-      description: 'Create professional resumes in minutes with our powerful features',
+      description: 'Create stunning, professional resumes in minutes',
       color: 'from-blue-500 to-indigo-600',
       highlights: [
-        'Choose between resume with or without photo',
-        'Rich text formatting with markdown support',
-        '12 beautiful color themes',
-        'Drag-and-drop section reordering',
-        'Custom sections for certifications, awards, etc.'
+        '🎯 3 Professional Templates - Modern, Classic, ATS-Friendly',
+        '🎨 12 Beautiful Color Themes - Match your industry',
+        '✍️ 6 Font Styles - Helvetica, Times, Arial, and more',
+        '📸 Professional Photo Upload - Optional headshot',
+        '✨ One-Click Sample Data - Start with realistic examples'
       ],
       image: '📄'
     },
     {
-      icon: Camera,
-      title: 'Resume Types',
-      description: 'Select the perfect format for your needs',
+      icon: Palette,
+      title: '3 Professional Templates',
+      description: 'Choose the perfect design for your career',
       color: 'from-purple-500 to-pink-600',
       highlights: [
-        '📝 Resume without Photo - ATS-friendly, widely accepted',
-        '📸 Resume with Photo - Modern, creative, personal branding',
-        'Upload professional headshot (PNG, JPG)',
-        'Photo appears in top-right corner of PDF',
-        'Easy toggle between types'
+        '🎯 Modern - Clean, contemporary design for tech & creative roles',
+        '📋 Classic - Traditional, elegant layout for corporate positions',
+        '🤖 ATS-Friendly - Optimized for automated screening systems',
+        '🎨 All templates support 12 color themes',
+        '✍️ All templates support 6 professional fonts'
       ],
       image: '🎨'
+    },
+    {
+      icon: Camera,
+      title: 'Professional Photo Upload',
+      description: 'Add your headshot for a personal touch',
+      color: 'from-green-500 to-emerald-600',
+      highlights: [
+        '📸 Upload JPG or PNG photos (up to 5MB)',
+        '📐 Automatic positioning in top-right corner',
+        '🎨 Colored border matching your theme',
+        '✅ Works in all 3 templates',
+        '💡 Optional - Create versions with and without photo'
+      ],
+      image: '📸'
     },
     {
       icon: Sparkles,
-      title: 'Smart Features',
-      description: 'Powerful tools to make resume building effortless',
-      color: 'from-green-500 to-emerald-600',
-      highlights: [
-        '✨ Fill Sample Data - One-click demo with realistic content',
-        '📝 Rich Text Editor - Bold, italic, bullets, numbering',
-        '⌨️ Smart Enter - Auto-continue bullets and numbered lists',
-        '🎯 Shift+Enter - Simple line break without formatting',
-        '📋 Real-time preview of your resume'
-      ],
-      image: '⚡'
-    },
-    {
-      icon: Palette,
-      title: 'Customization',
-      description: 'Make your resume uniquely yours',
+      title: 'Smart Rich Text Editor',
+      description: 'Format your content like a pro',
       color: 'from-orange-500 to-red-600',
       highlights: [
-        '🎨 12 Color Themes - Blue, Indigo, Purple, Green, and more',
-        '➕ Custom Sections - Add Certifications, Awards, Languages',
-        '🔄 Drag & Drop - Reorder sections to highlight strengths',
-        '📐 Professional Layout - Optimized spacing and typography',
-        '💾 Auto-save in browser (coming soon)'
+        '**Bold** - Ctrl/Cmd + B for emphasis',
+        '*Italic* - Ctrl/Cmd + I for technologies',
+        '• Bullets - Press Enter to auto-continue',
+        '1. Numbering - Auto-increment numbered lists',
+        '⇧ Enter - Simple line break without formatting'
       ],
-      image: '🎨'
+      image: '✍️'
     },
     {
       icon: GripVertical,
-      title: 'Drag & Drop Sections',
-      description: 'Organize your resume your way',
+      title: 'Live Preview & Toggle',
+      description: 'See your resume in real-time',
       color: 'from-cyan-500 to-blue-600',
       highlights: [
-        '🔀 Reorder main sections (Education, Experience, Skills, Projects)',
-        '📌 Custom sections stay in their own area',
-        '👆 Grab the grip icon to drag',
-        '✨ Smooth animations during reordering',
-        '📱 Works on touch devices too'
+        '👁️ Live Preview - Updates as you type',
+        '🔄 Toggle On/Off - Show/hide preview anytime',
+        '🖥️ Fullscreen Mode - View PDF in fullscreen with zoom',
+        '📱 Responsive - Works on desktop and tablet',
+        '⚡ Instant Updates - No delays or lag'
       ],
-      image: '↕️'
+      image: '👁️'
+    },
+    {
+      icon: CheckCircle,
+      title: 'AI Resume Analyzer',
+      description: 'Get instant feedback and improve your resume',
+      color: 'from-indigo-500 to-purple-600',
+      highlights: [
+        '📊 Overall Score - Get rated out of 100',
+        '✅ Strengths Analysis - See what you did well',
+        '💡 Improvement Tips - Actionable suggestions',
+        '🎯 Keyword Optimization - Match job descriptions',
+        '📏 Length & Format - Ensure ATS compatibility'
+      ],
+      image: '📊'
+    },
+    {
+      icon: Zap,
+      title: 'Customization & Sections',
+      description: 'Make your resume uniquely yours',
+      color: 'from-teal-500 to-green-600',
+      highlights: [
+        '➕ Custom Sections - Add Certifications, Awards, Languages',
+        '🎨 12 Color Themes - Blue, Purple, Green, Red, and more',
+        '✍️ 6 Font Styles - Professional typography options',
+        '🔄 Drag & Drop - Reorder sections (coming soon)',
+        '📐 Perfect Spacing - Professional layout automatically'
+      ],
+      image: '⚙️'
     },
     {
       icon: Download,
-      title: 'Export & Preview',
+      title: 'Export & Download',
       description: 'Get your professional resume instantly',
-      color: 'from-indigo-500 to-purple-600',
+      color: 'from-pink-500 to-rose-600',
       highlights: [
-        '👁️ Preview PDF - See before downloading',
-        '⬇️ Download PDF - Save to your device',
-        '📄 Professional formatting preserved',
-        '🎨 Color theme applied throughout',
-        '📸 Photo included (if selected)'
+        '📥 Download PDF - High-quality, print-ready',
+        '🎨 Theme Applied - Colors throughout PDF',
+        '📸 Photo Included - If uploaded',
+        '✅ ATS-Compatible - Passes automated screening',
+        '💾 Professional Format - Perfect alignment & spacing'
       ],
       image: '💾'
     },
     {
       icon: CheckCircle,
-      title: 'Ready to Start!',
-      description: 'You\'re all set to create an amazing resume',
+      title: 'Ready to Start! 🚀',
+      description: 'Follow these steps to create your amazing resume',
       color: 'from-green-500 to-teal-600',
       highlights: [
-        '1️⃣ Choose your resume type (with/without photo)',
-        '2️⃣ Fill in your details or use sample data',
-        '3️⃣ Customize colors and sections',
-        '4️⃣ Preview and download your resume',
-        '5️⃣ Land your dream job! 🚀'
+        '1️⃣ Click "Fill Sample Data" to see examples',
+        '2️⃣ Choose Template, Color Theme, and Font Style',
+        '3️⃣ Upload your photo (optional)',
+        '4️⃣ Edit content and use formatting toolbar',
+        '5️⃣ Check Resume Score, preview, and download! 🎉'
       ],
       image: '✅'
     }
