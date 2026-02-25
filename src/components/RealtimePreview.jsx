@@ -14,7 +14,27 @@ function RealtimePreview({
   const [pdfDataUrl, setPdfDataUrl] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const updateTimeoutRef = useRef(null);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-open fullscreen on mobile when preview is shown
+  useEffect(() => {
+    if (isVisible && isMobile && !isFullscreen) {
+      setIsFullscreen(true);
+    }
+  }, [isVisible, isMobile]);
 
   // Generate preview with debouncing
   useEffect(() => {
@@ -58,9 +78,9 @@ function RealtimePreview({
     <div 
       className={`${
         isFullscreen 
-          ? 'fixed inset-0 z-50 bg-white' 
-          : 'sticky top-4 h-[calc(100vh-2rem)]'
-      } flex flex-col`}
+          ? 'fixed inset-0 z-50 bg-white flex' 
+          : 'sticky top-4 h-[calc(100vh-2rem)] hidden lg:flex'
+      } flex-col`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg">
@@ -87,7 +107,14 @@ function RealtimePreview({
           
           {/* Fullscreen Toggle */}
           <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
+            onClick={() => {
+              const newFullscreenState = !isFullscreen;
+              setIsFullscreen(newFullscreenState);
+              // On mobile, close preview when exiting fullscreen
+              if (isMobile && !newFullscreenState && onVisibilityChange) {
+                onVisibilityChange(false);
+              }
+            }}
             className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
@@ -100,7 +127,10 @@ function RealtimePreview({
           
           {/* Hide Button */}
           <button
-            onClick={() => onVisibilityChange && onVisibilityChange(false)}
+            onClick={() => {
+              setIsFullscreen(false);
+              onVisibilityChange && onVisibilityChange(false);
+            }}
             className="p-2 hover:bg-white/20 rounded-lg transition-colors"
             title="Hide preview"
           >
@@ -110,7 +140,7 @@ function RealtimePreview({
       </div>
 
       {/* PDF Preview */}
-      <div className="flex-1 bg-gray-100 overflow-auto rounded-b-lg">
+      <div className={`flex-1 bg-gray-100 overflow-auto ${isFullscreen ? '' : 'rounded-b-lg'}`}>
         {isLoading && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -121,11 +151,60 @@ function RealtimePreview({
         )}
         
         {!isLoading && pdfDataUrl && (
-          <iframe
-            src={`${pdfDataUrl}#zoom=${isFullscreen ? '100' : '39'}`}
-            className="w-full h-full border-0"
-            title="Resume Preview"
-          />
+          <>
+            {isMobile ? (
+              // Mobile: Show PDF with better compatibility
+              <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                <object
+                  data={`${pdfDataUrl}#view=FitH&toolbar=0&navpanes=0`}
+                  type="application/pdf"
+                  className="w-full h-full border-0 bg-white"
+                  title="Resume Preview"
+                  style={{ minHeight: '100vh' }}
+                >
+                  <div className="flex flex-col items-center justify-center h-full p-8">
+                    <p className="text-gray-600 mb-4">PDF preview not available</p>
+                    <a
+                      href={pdfDataUrl}
+                      download="resume.pdf"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download PDF
+                    </a>
+                  </div>
+                </object>
+              </div>
+            ) : (
+              // Desktop: Use object tag for better Chrome compatibility
+              <object
+                data={`${pdfDataUrl}#zoom=${isFullscreen ? '100' : '39'}`}
+                type="application/pdf"
+                className="w-full h-full border-0"
+                title="Resume Preview"
+              >
+                <div className="flex flex-col items-center justify-center h-full p-8 bg-gray-50">
+                  <div className="text-center max-w-md">
+                    <div className="mb-4">
+                      <Eye className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Preview Not Available</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Your browser doesn't support inline PDF preview. Download the PDF to view it.
+                      </p>
+                    </div>
+                    <a
+                      href={pdfDataUrl}
+                      download="resume.pdf"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-lg"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download PDF
+                    </a>
+                  </div>
+                </div>
+              </object>
+            )}
+          </>
         )}
         
         {!isLoading && !pdfDataUrl && (

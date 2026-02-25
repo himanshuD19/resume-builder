@@ -11,6 +11,7 @@ import EditResume from './components/EditResume';
 import TemplateSelector from './components/TemplateSelector';
 import RealtimePreview from './components/RealtimePreview';
 import ResumeAnalyzer from './components/ResumeAnalyzer';
+import ScrollToTop from './components/ScrollToTop';
 import { trackDownload, trackPreview } from './utils/analytics';
 import { saveToLocalStorage } from './utils/pdfParser';
 
@@ -1041,6 +1042,9 @@ function App() {
           <span className="hidden sm:inline">Show Preview</span>
         </button>
       )}
+
+      {/* Scroll to Top Button */}
+      <ScrollToTop />
     </div>
   );
 }
